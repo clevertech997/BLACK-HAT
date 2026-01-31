@@ -1,17 +1,17 @@
 const axios = require('axios');
 const { sleep } = require('../lib/myfunc');
 
-async function pairCommand(sock, chatId, message, q) {
+async function prCommand(sock, chatId, message, q) {
     try {
         if (!q) {
             return await sock.sendMessage(chatId, {
                 text: "Please provide valid WhatsApp number\nExample: .pr 91702395XXXX",
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: true,
+                    isForwarded: false,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363161513685998@newsletter',
-                        newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                        newsletterJid: '@newsletter',
+                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                         serverMessageId: -1
                     }
                 }
@@ -27,10 +27,10 @@ async function pairCommand(sock, chatId, message, q) {
                 text: "Invalid number❌️ Please use the correct format!",
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: true,
+                    isForwarded: false,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363161513685998@newsletter',
-                        newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                        newsletterJid: '@newsletter',
+                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                         serverMessageId: -1
                     }
                 }
@@ -46,10 +46,10 @@ async function pairCommand(sock, chatId, message, q) {
                     text: `That number is not registered on WhatsApp❗️`,
                     contextInfo: {
                         forwardingScore: 1,
-                        isForwarded: true,
+                        isForwarded: false,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid: '120363161513685998@newsletter',
-                            newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                            newsletterJid: '@newsletter',
+                            newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                             serverMessageId: -1
                         }
                     }
@@ -60,10 +60,10 @@ async function pairCommand(sock, chatId, message, q) {
                 text: "Wait a moment for the code",
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: true,
+                    isForwarded: false,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363161513685998@newsletter',
-                        newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                        newsletterJid: '@newsletter',
+                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                         serverMessageId: -1
                     }
                 }
@@ -83,10 +83,10 @@ async function pairCommand(sock, chatId, message, q) {
                         text: `Your pairing code: ${code}`,
                         contextInfo: {
                             forwardingScore: 1,
-                            isForwarded: true,
+                            isForwarded: false,
                             forwardedNewsletterMessageInfo: {
-                                newsletterJid: '120363161513685998@newsletter',
-                                newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                                newsletterJid: '@newsletter',
+                                newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                                 serverMessageId: -1
                             }
                         }
@@ -104,10 +104,10 @@ async function pairCommand(sock, chatId, message, q) {
                     text: errorMessage,
                     contextInfo: {
                         forwardingScore: 1,
-                        isForwarded: true,
+                        isForwarded: false,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid: '120363161513685998@newsletter',
-                            newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                            newsletterJid: '@newsletter',
+                            newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                             serverMessageId: -1
                         }
                     }
@@ -120,10 +120,10 @@ async function pairCommand(sock, chatId, message, q) {
             text: "An error occurred. Please try again later.",
             contextInfo: {
                 forwardingScore: 1,
-                isForwarded: true,
+                isForwarded: false,
                 forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363161513685998@newsletter',
-                    newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
+                    newsletterJid: '@newsletter',
+                    newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧',
                     serverMessageId: -1
                 }
             }
@@ -131,4 +131,4 @@ async function pairCommand(sock, chatId, message, q) {
     }
 }
 
-module.exports = pairCommand; 
+module.exports = prCommand; 
