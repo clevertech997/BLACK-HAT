@@ -4,17 +4,14 @@ const path = require('path');
 
 async function helpCommand(sock, chatId, message) {
     const helpMessage = `
-╔═══════════════════╗
+╭━❮ *✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦* ❯━┈⊷
    *🤖 ${settings.botName || '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'}*  
    Version: *${settings.version || '3.0.0'}*
-   by ${settings.botOwner || '𝑪𝑳𝑬𝑽𝑬𝑹✦𝑻𝑬𝑪𝑯'}
-   YT : ${global.ytch}
-╚═══════════════════╝
+   owner ➳ ${settings.botOwner || '𝑪𝑳𝑬𝑽𝑬𝑹✦𝑻𝑬𝑪𝑯'}
+   YT ➳  ${global.ytch}
+╰━━━━━━━━━━━━⪼
 
-*Available Commands:*
-
-╔═══════════════════╗
-🌐 *General Commands*:
+╭━❮ *General Commands* ❯━┈⊷
 ║ ✦ .help or .menu
 ║ ✦ .ping
 ║ ✦ .alive
@@ -35,10 +32,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .ss <link>
 ║ ✦ .jid
 ║ ✦ .url
-╚═══════════════════╝ 
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-👮‍♂️ *Admin Commands*:
+╭━❮ 👮‍♂️ *Admin Commands* ❯━┈⊷
 ║ ✦ .ban @user
 ║ ✦ .promote @user
 ║ ✦ .demote @user
@@ -63,10 +59,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .setgdesc <description>
 ║ ✦ .setgname <new name>
 ║ ✦ .setgpp (reply to image)
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🔒 *Owner Commands*:
+╭━❮ 🔒 *Owner Commands* ❯━┈⊷
 ║ ✦ .mode <public/private>
 ║ ✦ .clearsession
 ║ ✦ .antidelete
@@ -84,10 +79,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .pmblocker setmsg <text>
 ║ ✦ .setmention <reply to msg>
 ║ ✦ .mention <on/off>
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🎨 *Image/Sticker Commands*:
+╭━❮ 🎨 *Image/Sticker Commands* ❯━┈⊷
 ║ ✦ .blur <image>
 ║ ✦ .simage <reply to sticker>
 ║ ✦ .sticker <reply to image>
@@ -100,20 +94,18 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .emojimix <emj1>+<emj2>
 ║ ✦ .igs <insta link>
 ║ ✦ .igsc <insta link>
-╚═══════════════════╝  
+╰━━━━━━━━━━━━⪼ 
 
-╔═══════════════════╗
-🖼️ *Pies Commands*:
+╭━❮ 🖼️ *Pies Commands* ❯━┈⊷
 ║ ✦ .pies <country>
 ║ ✦ .china 
 ║ ✦ .indonesia 
 ║ ✦ .japan 
 ║ ✦ .korea 
 ║ ✦ .hijab
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🎮 *Game Commands*:
+╭━❮ 🎮 *Game Commands* ❯━┈⊷
 ║ ✦ .tictactoe @user
 ║ ✦ .hangman
 ║ ✦ .guess <letter>
@@ -121,19 +113,17 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .answer <answer>
 ║ ✦ .truth
 ║ ✦ .dare
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🤖 *AI Commands*:
+╭━❮ 🤖 *AI Commands* ❯━┈⊷
 ║ ✦ .gpt <question>
 ║ ✦ .gemini <question>
 ║ ✦ .imagine <prompt>
 ║ ✦ .flux <prompt>
 ║ ✦ .sora <prompt>
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🎯 *Fun Commands*:
+╭━❮ 🎯 *Fun Commands* ❯━┈⊷
 ║ ✦ .compliment @user
 ║ ✦ .insult @user
 ║ ✦ .flirt 
@@ -145,10 +135,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .ship @user
 ║ ✦ .simp @user
 ║ ✦ .stupid @user [text]
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🔤 *Textmaker*:
+╭━❮ 🔤 *Textmaker* ❯━┈⊷
 ║ ✦ .metallic <text>
 ║ ✦ .ice <text>
 ║ ✦ .snow <text>
@@ -167,10 +156,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .blackpink <text>
 ║ ✦ .glitch <text>
 ║ ✦ .fire <text>
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-📥 *Downloader*:
+╭━❮ 📥 *Downloader* ❯━┈⊷
 ║ ✦ .play <song_name>
 ║ ✦ .song <song_name>
 ║ ✦ .spotify <query>
@@ -179,10 +167,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .tiktok <link>
 ║ ✦ .video <song name>
 ║ ✦ .ytmp4 <Link>
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🧩 *MISC*:
+╭━❮ 🧩 *MISC* ❯━┈⊷
 ║ ✦ .heart
 ║ ✦ .horny
 ║ ✦ .circle
@@ -199,10 +186,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .jail 
 ║ ✦ .passed 
 ║ ✦ .triggered
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-🖼️ *ANIME*:
+╭━❮ 🖼️ *ANIME* ❯━┈⊷
 ║ ✦ .nom 
 ║ ✦ .poke 
 ║ ✦ .cry 
@@ -211,16 +197,15 @@ async function helpCommand(sock, chatId, message) {
 ║ ✦ .hug 
 ║ ✦ .wink 
 ║ ✦ .facepalm 
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
-╔═══════════════════╗
-💻 *Github Commands:*
+╭━❮ 💻 *Github Commands* ❯━┈⊷
 ║ ✦ .git
 ║ ✦ .github
 ║ ✦ .sc
 ║ ✦ .script
 ║ ✦ .repo
-╚═══════════════════╝
+╰━━━━━━━━━━━━⪼
 
 Join our channel for updates:`;
 
@@ -235,10 +220,10 @@ Join our channel for updates:`;
                 caption: helpMessage,
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: true,
+                    isForwarded: false,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363161513685998@newsletter',
-                        newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                        newsletterJid: '@newsletter',
+                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
                         serverMessageId: -1
                     }
                 }
@@ -249,10 +234,10 @@ Join our channel for updates:`;
                 text: helpMessage,
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: true,
+                    isForwarded: false,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363161513685998@newsletter',
-                        newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦ by 𝑪𝑳𝑬𝑽𝑬𝑹✦𝑻𝑬𝑪𝑯',
+                        newsletterJid: '@newsletter',
+                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦ by 𝑪𝑳𝑬𝑽𝑬𝑹✦𝑻𝑬𝑪𝑯',
                         serverMessageId: -1
                     } 
                 }

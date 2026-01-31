@@ -1,7 +1,7 @@
 const settings = require("../settings");
 async function aliveCommand(sock, chatId, message) {
     try {
-        const message1 = `*🤖 Knight Bot is Active!*\n\n` +
+        const message1 = `*🤖 ✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧 is Active!*\n\n` +
                        `*Version:* ${settings.version}\n` +
                        `*Status:* Online\n` +
                        `*Mode:* Public\n\n` +
@@ -16,10 +16,10 @@ async function aliveCommand(sock, chatId, message) {
             text: message1,
             contextInfo: {
                 forwardingScore: 999,
-                isForwarded: true,
+                isForwarded: false,
                 forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363161513685998@newsletter',
-                    newsletterName: '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                    newsletterJid: '@newsletter',
+                    newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
                     serverMessageId: -1
                 }
             }
