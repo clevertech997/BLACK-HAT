@@ -5,10 +5,11 @@ const path = require('path');
 async function helpCommand(sock, chatId, message) {
     const helpMessage = `
 ╭━❮ *✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦* ❯━┈⊷
-   *🤖 ${settings.botName || '➳✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'}*  
-   Version: *${settings.version || '3.0.0'}*
-   owner ➳ ${settings.botOwner || '𝑪𝑳𝑬𝑽𝑬𝑹✦𝑻𝑬𝑪𝑯'}
-   YT ➳  ${global.ytch}
+║━▢  *🤖 ${settings.botName || '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'}*  
+║━▢  Owner:  ${settings.botOwner || '*𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆*'}
+║━▢  Version: *${settings.version || '3.0.0'}*
+║━▢  Platform: Heroku
+║━▢  YT   ${global.ytch}
 ╰━━━━━━━━━━━━⪼
 
 ╭━❮ *General Commands* ❯━┈⊷
@@ -220,10 +221,10 @@ Join our channel for updates:`;
                 caption: helpMessage,
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: false,
+                    isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '@newsletter',
-                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                        newsletterJid: '120363422524788798@newsletter',
+                        newsletterName: '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
                         serverMessageId: -1
                     }
                 }
@@ -234,10 +235,10 @@ Join our channel for updates:`;
                 text: helpMessage,
                 contextInfo: {
                     forwardingScore: 1,
-                    isForwarded: false,
+                    isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: '@newsletter',
-                        newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦ by 𝑪𝑳𝑬𝑽𝑬𝑹✦𝑻𝑬𝑪𝑯',
+                        newsletterJid: '120363422524788798@newsletter',
+                        newsletterName: '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦ by 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆',
                         serverMessageId: -1
                     } 
                 }

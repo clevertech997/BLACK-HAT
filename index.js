@@ -1,6 +1,6 @@
 /**
- * ✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧 - A WhatsApp Bot
- * Copyright (c) 2024 Professor
+ * 𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧 - A WhatsApp Bot
+ * Copyright (c) 2026 Professor
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the MIT License.
@@ -70,10 +70,10 @@ setInterval(() => {
     }
 }, 30_000) // check every 30 seconds
 
-let phoneNumber = "255680499093"
+let phoneNumber = "255794469700"
 let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
 
-global.botname = "✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧"
+global.botname = "𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧"
 global.themeemoji = "•"
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code")
 const useMobile = process.argv.includes("--mobile")
@@ -158,10 +158,10 @@ async function startXeonBotInc() {
                         text: '❌ An error occurred while processing your message.',
                         contextInfo: {
                             forwardingScore: 1,
-                            isForwarded: false,
+                            isForwarded: true,
                             forwardedNewsletterMessageInfo: {
-                                newsletterJid: '@newsletter',
-                                newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                                newsletterJid: '120363422524788798@newsletter',
+                                newsletterName: '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
                                 serverMessageId: -1
                             }
                         }
@@ -219,7 +219,7 @@ async function startXeonBotInc() {
         if (!!global.phoneNumber) {
             phoneNumber = global.phoneNumber
         } else {
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number 😍\nFormat: 6281376552730 (without + or spaces) : `)))
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number 😍\nFormat: 255794469700 (without + or spaces) : `)))
         }
 
         // Clean the phone number - remove any non-digit characters
@@ -267,10 +267,10 @@ async function startXeonBotInc() {
                     text: `🤖 Bot Connected Successfully!\n\n⏰ Time: ${new Date().toLocaleString()}\n✅ Status: Online and Ready!\n\n✅Make sure to join channel`,
                     contextInfo: {
                         forwardingScore: 1,
-                        isForwarded: false,
+                        isForwarded: true,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid: '@newsletter',
-                            newsletterName: '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                            newsletterJid: '120363422524788798@newsletter',
+                            newsletterName: '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
                             serverMessageId: -1
                         }
                     }
@@ -280,13 +280,13 @@ async function startXeonBotInc() {
             }
 
             await delay(1999)
-            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || '✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'} ]`)}\n\n`))
-            console.log(chalk.cyan(`< ================================================== >`))
-            console.log(chalk.magenta(`\n${global.themeemoji || '•'} YT CHANNEL: ✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: clevertech997`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} WA NUMBER: ${owner}`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: ✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦`))
-            console.log(chalk.green(`${global.themeemoji || '•'} 🤖 Bot Connected Successfully! ✅`))
+            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'} ]`)}\n\n`))
+            console.log(chalk.cyan(`╭━❮ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ❯━┈⊷`))
+            console.log(chalk.magenta(`\n${global.themeemoji || '║━▢'} YT CHANNEL: 𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻`))
+            console.log(chalk.magenta(`${global.themeemoji || '║━▢'} GITHUB: clevertech997`))
+            console.log(chalk.magenta(`${global.themeemoji || '║━▢'} WA NUMBER: ${owner}`))
+            console.log(chalk.magenta(`${global.themeemoji || '║━▢'} CREDIT: 𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦`))
+            console.log(chalk.green(`${global.themeemoji || '║━▢'} 🤖 Bot Connected Successfully! ✅`))
             console.log(chalk.blue(`Bot Version: ${settings.version}`))
         }
         

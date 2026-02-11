@@ -1,7 +1,7 @@
 {
-  "name": "✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧",
+  "name": "𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧",
   "version": "0.0.0.1",
-  "description": "WhatsApp Bot",
+  "description": "Script Bot by anonymous-user",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,7 +13,7 @@
     "install:panel": "npm install --legacy-peer-deps",
     "install:force": "npm install --force",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docker:build": "docker build -t docker run -e SESSION_ID=$SESSION_ID ✦𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧"
+    "docker:build": "docker build -t docker run -e SESSION_ID=$SESSION_ID 𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧"
   },
   "keywords": [
     "whatsapp-bot"
