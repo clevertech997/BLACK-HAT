@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { sleep } = require('../lib/myfunc');
 
-async function prCommand(sock, chatId, message, q) {
+async function pairrCommand(sock, chatId, message, q) {
     try {
         if (!q) {
             return await sock.sendMessage(chatId, {
@@ -131,4 +131,4 @@ async function prCommand(sock, chatId, message, q) {
     }
 }
 
-module.exports = prCommand; 
+module.exports = pairCommand; 
