@@ -142,7 +142,8 @@ const { anticallCommand, readState: readAnticallState } = require('./commands/an
 const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/pmblocker');
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
-
+const getPPCommand = require('./commands/getpp');
+const antiBotCommand = require('./commands/antibot'); // adjust path
 // Global settings
 global.packname = settings.packname;
 global.author = settings.author;
@@ -432,6 +433,15 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage.startsWith('.warn'):
                 const mentionedJidListWarn = message.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
                 await warnCommand(sock, chatId, senderId, mentionedJidListWarn, message);
+                break;
+            case userMessage.startsWith('.antibot'):
+                const args = userMessage.split(' ').slice(1); // extract 'on' or 'off'
+                await antiBotCommand(sock, message, args);
+                commandExecuted = true;
+                break;
+            case userMessage === '.getpp':   // ✅ .getpp command
+                await getPPCommand(sock, chatId, message);
+                commandExecuted = true;
                 break;
             case userMessage.startsWith('.tts'):
                 const text = userMessage.slice(4).trim();
@@ -1237,7 +1247,19 @@ async function handleGroupParticipantUpdate(sock, update) {
             await handlePromotionEvent(sock, id, participants, author);
             return;
         }
-
+// --- AntiBot check ---
+        if (settings.antibot) {
+            for (let participant of participants) {
+                if (participant === sock.user.id) continue; // skip self
+                const isBot = participant.includes('bot'); // simple bot detection
+                if (isBot) {
+                    await sock.groupParticipantsUpdate(id, [participant], 'remove');
+                    await sock.sendMessage(id, { text: `🤖 Bot ${participant.split('@')[0]} removed!` });
+                } else {
+                    await sock.sendMessage(id, { text: `⚠️ ${participant.split('@')[0]} welcome! AntiBot is enabled.` });
+                }
+            }
+        }
         // Handle demotion events
         if (action === 'demote') {
             if (!isPublic) return;
