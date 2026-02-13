@@ -1,10 +1,10 @@
-const settings = require('../settings'); // Hakikisha settings ina ownerNumber
+const settings = require('../settings'); // Ensure this path is correct
 
 async function getPPCommand(sock, chatId, message) {
     try {
         const sender = message.key.participant || message.key.remoteJid;
 
-        // 🔒 Check if sender is owner
+        // 🔒 Private command: only owner can use
         if (sender !== settings.ownerNumber + '@s.whatsapp.net') {
             return await sock.sendMessage(chatId, {
                 text: '❌ You are not authorized to use this command.'
@@ -40,16 +40,14 @@ async function getPPCommand(sock, chatId, message) {
         try {
             ppUrl = await sock.profilePictureUrl(jid, 'image');
         } catch {
-            ppUrl = null; // Hakuna profile pic
+            ppUrl = null;
         }
 
         // 4️⃣ Pata info za user
         let contact;
         try {
             const v = await sock.onWhatsApp(jid);
-            if (v && v[0]?.exists) {
-                contact = await sock.getContact(jid);
-            }
+            if (v && v[0]?.exists) contact = await sock.getContact(jid);
         } catch {
             contact = null;
         }
@@ -64,7 +62,7 @@ async function getPPCommand(sock, chatId, message) {
             presence = 'Unavailable';
         }
 
-        // 6️⃣ WAID verification (check if exists)
+        // 6️⃣ WAID verification
         const waidVerified = contact ? '✅ Exists on WhatsApp' : '❌ Not found';
 
         // 7️⃣ Status message
