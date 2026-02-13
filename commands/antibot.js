@@ -1,7 +1,6 @@
 const fs = require('fs');
-const settings = require('../commands'); // Your bot settings file
+const settings = require('./settings.js'); // current folder
 
-// Ensure we have a file to persist antibot status
 const antibotFile = './data/antibot.json';
 
 function saveAntiBotStatus() {
@@ -16,6 +15,7 @@ function loadAntiBotStatus() {
         saveAntiBotStatus();
     }
 }
+
 loadAntiBotStatus();
 
 async function antiBotCommand(sock, message) {
