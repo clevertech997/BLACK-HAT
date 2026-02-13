@@ -54,7 +54,6 @@ async function helpCommand(sock, chatId, message) {
 ║ ⚠️ .warnings @user
 ║ ⚠️ .warn @user
 ║ 🚫 .antilink
-║ 🗣️ .getpp
 ║ 🚫 .antibadword
 ║ 🧹 .clear
 ║ 📣 .tag <message>
@@ -62,6 +61,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🗣️ .tagnotadmin
 ║ 🙈 .hidetag <message>
 ║ 🤖 .chatbot
+║ 🤖 .antibot
 ║ 🔗 .resetlink
 ║ 🚷 .antitag <on/off>
 ║ 👋 .welcome <on/off>
@@ -75,6 +75,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🛠️ .mode <public/private>
 ║ 🧹 .clearsession
 ║ 🕵️‍♂️ .antidelete
+║ 🗣️ .getpp
 ║ 🗑️ .cleartmp
 ║ 🔄 .update
 ║ ⚙️ .settings

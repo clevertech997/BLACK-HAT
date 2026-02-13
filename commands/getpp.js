@@ -1,121 +1,147 @@
-const settings = require('../settings');
+const isOwnerOrSudo = require('../lib/isOwner');
 
 async function getPPCommand(sock, chatId, message) {
     try {
+        if (!message) return;
+
         const sender = message.key.participant || message.key.remoteJid;
 
-        // 🔒 Private mode check
-        if (settings.commandMode === "private" && sender !== settings.ownerNumber + '@s.whatsapp.net') {
+        // OWNER ONLY
+        const allowed = await isOwnerOrSudo(sender);
+        if (!allowed) {
             return await sock.sendMessage(chatId, {
-                text: '❌ You are not authorized to use this command.'
+                text: '🚫 OWNER ONLY COMMAND'
             }, { quoted: message });
         }
 
         let jid;
 
-        // 1️⃣ Angalia kama user amereply
-        if (message.message?.extendedTextMessage?.contextInfo?.participant) {
-            jid = message.message.extendedTextMessage.contextInfo.participant;
+        // Reply check
+        const replyUser = message.message?.extendedTextMessage?.contextInfo?.participant;
+        if (replyUser) {
+            jid = replyUser;
         } else {
-            // 2️⃣ Pata number kutoka message
-            const rawText = message.message?.conversation?.trim() ||
-                            message.message?.extendedTextMessage?.text?.trim() || '';
-            const used = rawText.split(/\s+/)[0] || '.getpp';
-            const number = rawText.slice(used.length).trim();
+            const rawText =
+                message.message?.conversation ||
+                message.message?.extendedTextMessage?.text ||
+                '';
 
-            if (!number) {
+            const args = rawText.trim().split(/\s+/).slice(1);
+
+            if (!args[0]) {
                 return await sock.sendMessage(
                     chatId,
-                    { text: '⚠️ Usage:\n.getpp <number>\nOR reply to a user with .getpp' },
+                    { text: '⚠️ Usage:\n.getpp <number>\nOR reply to user with .getpp' },
                     { quoted: message }
                 );
             }
 
-            jid = number.includes('@s.whatsapp.net') ? number : `${number}@s.whatsapp.net`;
+            const cleanNumber = args[0].replace(/[^0-9]/g, '');
+            jid = `${cleanNumber}@s.whatsapp.net`;
         }
 
-        // 3️⃣ Pata profile picture URL
-        let ppUrl;
+        // Check WA existence
+        const exists = await sock.onWhatsApp(jid);
+        if (!exists || !exists[0]?.exists) {
+            return await sock.sendMessage(chatId, {
+                text: '❌ Number not registered on WhatsApp.'
+            }, { quoted: message });
+        }
+
+        // Profile pic
+        let ppUrl = null;
         try {
             ppUrl = await sock.profilePictureUrl(jid, 'image');
-        } catch {
-            ppUrl = null;
-        }
+        } catch {}
 
-        // 4️⃣ Pata info za user
-        let contact = null;
-        let userType = 'Individual';
-        let extraInfo = '';
+        // Fetch bio (about)
+        let bio = "No bio";
         try {
-            const exists = await sock.onWhatsApp(jid);
-            if (exists && exists[0]?.exists) contact = await sock.getContact(jid);
+            const statusData = await sock.fetchStatus(jid);
+            bio = statusData?.status || "No bio";
+        } catch {}
 
-            if (contact?.isBusiness) {
-                userType = 'Business';
-                extraInfo = `🏢 Business Name: ${contact.business?.name || 'N/A'}\n⚡ Description: ${contact.business?.description || 'N/A'}`;
-            }
+        // Contact info
+        let contact;
+        try {
+            contact = await sock.getContact(jid);
+        } catch {}
 
-            if (jid.endsWith('@g.us')) {
-                userType = 'Group';
-                try {
-                    const groupMeta = await sock.groupMetadata(jid);
-                    extraInfo = `👥 Members: ${groupMeta.participants.length}\n🔥 Subject: ${groupMeta.subject}`;
-                } catch {
-                    extraInfo = '👥 Members info unavailable';
-                }
-            }
-        } catch {
-            contact = null;
-        }
+        const name = contact?.name || jid.split('@')[0];
+        const isBusiness = contact?.isBusiness || false;
 
-        // 5️⃣ Last seen / presence
-        let presence = '❓ Unknown';
+        // Presence
+        let presence = 'Unknown';
         try {
             const p = await sock.fetchPresence(jid);
-            if (p?.lastSeen) presence = `⏱️ ${new Date(p.lastSeen * 1000).toLocaleString()} ⚡`;
-            else if (p?.presence) presence = p.presence === 'online' ? '🟢 Online 🔥' : '⚪ Offline 💀';
-        } catch {
-            presence = '❌ Unavailable ⚡';
+            if (p?.presence === 'online') presence = '🟢 Online';
+            else presence = '⚪ Offline';
+        } catch {}
+
+        // Country detect
+        const numberOnly = jid.split('@')[0];
+        const countryMap = {
+            "255": "🇹🇿 Tanzania",
+            "254": "🇰🇪 Kenya",
+            "256": "🇺🇬 Uganda",
+            "234": "🇳🇬 Nigeria",
+            "1": "🇺🇸/🇨🇦 USA/Canada",
+            "91": "🇮🇳 India",
+            "44": "🇬🇧 UK"
+        };
+
+        let country = "Unknown 🌍";
+        for (const code in countryMap) {
+            if (numberOnly.startsWith(code)) {
+                country = countryMap[code];
+                break;
+            }
         }
 
-        // 6️⃣ WAID verification
-        const waidVerified = contact ? '✅ Exists on WhatsApp ⚡' : '❌ Not found 💀';
+        // Group info
+        let groupInfo = "";
+        if (jid.endsWith('@g.us')) {
+            try {
+                const meta = await sock.groupMetadata(jid);
+                groupInfo =
+`│👥 Members    : ${meta.participants.length}
+│📝 Subject    : ${meta.subject}`;
+            } catch {
+                groupInfo = "│👥 Group info unavailable";
+            }
+        }
 
-        // 7️⃣ Status message
-        const status = contact?.status?.text || 'No status 🔥';
+        // Hacker UI
+        const infoText =
+`╭━━━━━━━━━━━━━━━━━━━╮
+┃ ☠️ BLACKHAT ULTRA SCAN ☠️
+╰━━━━━━━━━━━━━━━━━━━╯
+│🧑 Name        : ${name}
+│📱 Number      : ${numberOnly}
+│🌍 Country     : ${country}
+│📇 WAID        : ${jid}
+│💬 Bio         : ${bio}
+│🏢 Type        : ${isBusiness ? "Business 🏢" : "Individual 👤"}
+│⏱️ Presence    : ${presence}
+${groupInfo ? groupInfo + "\n" : ""}╰━━━━━━━━━━━━━━━━━━━╯`;
 
-        // 8️⃣ Name
-        const name = contact?.name || jid.split('@')[0];
-
-        // 9️⃣ Compile info in full hacker style with extra emojis
-        const infoText = 
-`╭─❮ *💀🖤 HACKER INFO 🖤💀* ❯─╮
-│📝 Name       : ${name} ⚡
-│📇 WAID       : ${jid} (${waidVerified})
-│💬 Status     : ${status}
-│🕵️ Type       : ${userType} 🔥
-│⏱️ Last Seen  : ${presence}
-${extraInfo ? '│' + extraInfo.replace(/\n/g, '\n│') : ''}
-│🔗 JID        : ${jid} 💀
-╰────────────────────────╯`;
-
-        // 🔟 Tuma profile pic ikiwa ipo
+        // Send result
         if (ppUrl) {
             await sock.sendMessage(chatId, {
                 image: { url: ppUrl },
                 caption: infoText
             }, { quoted: message });
         } else {
-            await sock.sendMessage(chatId, { text: infoText }, { quoted: message });
+            await sock.sendMessage(chatId, {
+                text: infoText
+            }, { quoted: message });
         }
 
     } catch (err) {
-        console.error('[GETPP] Error:', err);
-        await sock.sendMessage(
-            chatId,
-            { text: '❌ Failed to fetch user info 💀.' },
-            { quoted: message }
-        );
+        console.error('[GETPP ULTRA ERROR]', err);
+        await sock.sendMessage(chatId, {
+            text: '❌ Scan failed.'
+        }, { quoted: message });
     }
 }
 
