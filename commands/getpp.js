@@ -19,8 +19,7 @@ async function getPPCommand(sock, chatId, message) {
         } else {
             // 2️⃣ Pata number kutoka message
             const rawText = message.message?.conversation?.trim() ||
-                            message.message?.extendedTextMessage?.text?.trim() ||
-                            '';
+                            message.message?.extendedTextMessage?.text?.trim() || '';
             const used = rawText.split(/\s+/)[0] || '.getpp';
             const number = rawText.slice(used.length).trim();
 
@@ -44,42 +43,63 @@ async function getPPCommand(sock, chatId, message) {
         }
 
         // 4️⃣ Pata info za user
-        let contact;
+        let contact = null;
+        let userType = 'Individual';
+        let extraInfo = '';
         try {
-            const v = await sock.onWhatsApp(jid);
-            if (v && v[0]?.exists) contact = await sock.getContact(jid);
+            const exists = await sock.onWhatsApp(jid);
+            if (exists && exists[0]?.exists) contact = await sock.getContact(jid);
+
+            if (contact?.isBusiness) {
+                userType = 'Business';
+                extraInfo = `🏢 Business Name: ${contact.business?.name || 'N/A'}\n⚡ Description: ${contact.business?.description || 'N/A'}`;
+            }
+
+            if (jid.endsWith('@g.us')) {
+                userType = 'Group';
+                try {
+                    const groupMeta = await sock.groupMetadata(jid);
+                    extraInfo = `👥 Members: ${groupMeta.participants.length}\n🔥 Subject: ${groupMeta.subject}`;
+                } catch {
+                    extraInfo = '👥 Members info unavailable';
+                }
+            }
         } catch {
             contact = null;
         }
 
         // 5️⃣ Last seen / presence
-        let presence = 'Unknown';
+        let presence = '❓ Unknown';
         try {
-            const pres = await sock.presenceSubscribe(jid);
             const p = await sock.fetchPresence(jid);
-            if (p?.lastSeen) presence = new Date(p.lastSeen * 1000).toLocaleString();
+            if (p?.lastSeen) presence = `⏱️ ${new Date(p.lastSeen * 1000).toLocaleString()} ⚡`;
+            else if (p?.presence) presence = p.presence === 'online' ? '🟢 Online 🔥' : '⚪ Offline 💀';
         } catch {
-            presence = 'Unavailable';
+            presence = '❌ Unavailable ⚡';
         }
 
         // 6️⃣ WAID verification
-        const waidVerified = contact ? '✅ Exists on WhatsApp' : '❌ Not found';
+        const waidVerified = contact ? '✅ Exists on WhatsApp ⚡' : '❌ Not found 💀';
 
         // 7️⃣ Status message
-        const status = contact?.status?.text || 'No status';
+        const status = contact?.status?.text || 'No status 🔥';
 
         // 8️⃣ Name
         const name = contact?.name || jid.split('@')[0];
 
-        // 9️⃣ Compile info
-        let infoText = `📌 User Info:\n`;
-        infoText += `📝 Name: ${name}\n`;
-        infoText += `📇 WAID: ${jid} (${waidVerified})\n`;
-        infoText += `💬 Status: ${status}\n`;
-        infoText += `⏱️ Last Seen: ${presence}\n`;
-        infoText += `🔗 JID: ${jid}`;
+        // 9️⃣ Compile info in full hacker style with extra emojis
+        const infoText = 
+`╭─❮ *💀🖤 HACKER INFO 🖤💀* ❯─╮
+│📝 Name       : ${name} ⚡
+│📇 WAID       : ${jid} (${waidVerified})
+│💬 Status     : ${status}
+│🕵️ Type       : ${userType} 🔥
+│⏱️ Last Seen  : ${presence}
+${extraInfo ? '│' + extraInfo.replace(/\n/g, '\n│') : ''}
+│🔗 JID        : ${jid} 💀
+╰────────────────────────╯`;
 
-        // 10️⃣ Tuma profile pic ikiwa ipo
+        // 🔟 Tuma profile pic ikiwa ipo
         if (ppUrl) {
             await sock.sendMessage(chatId, {
                 image: { url: ppUrl },
@@ -93,7 +113,7 @@ async function getPPCommand(sock, chatId, message) {
         console.error('[GETPP] Error:', err);
         await sock.sendMessage(
             chatId,
-            { text: '❌ Failed to fetch user info.' },
+            { text: '❌ Failed to fetch user info 💀.' },
             { quoted: message }
         );
     }
