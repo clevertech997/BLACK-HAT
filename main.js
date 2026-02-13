@@ -143,7 +143,7 @@ const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
 const getPPCommand = require('./commands/getPP');
-const handleAntiBot = require('./lib/antibot');
+
 
 
 // Global settings
@@ -267,24 +267,7 @@ async function startBot() {
         printQRInTerminal: true,
         auth: {/* auth info */}
     });
-
-    // =========================
-    // ANTIBOT AUTO KICK/WARN
-    // =========================
-    sock.ev.on('group-participants.update', async (update) => {
-        await handleAntiBot(sock, update);
-    });
-
-    // =========================
-    // MESSAGES HANDLER
-    // =========================
-    sock.ev.on('messages.upsert', async (m) => {
-        await handleMessages(sock, m, true);
-    });
-
 }
-
-startBot();
 
         // ==============================
 // COMMAND HANDLER
