@@ -16,7 +16,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 💻 Platform: Heroku
 ║ 🌐 Language: Node.js
 ║ 🎥 YouTube Channel: ${global.ytch || 'Not Set'}
-║ 🔧 Features: Premium, AutoReply, Music, Video, News
+║ 🔧 Features: Premium ✅
 ║ 📡 Status: Online ✅
 ╰━━━━━━━━━━━━⪼
 

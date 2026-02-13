@@ -1,68 +1,65 @@
 const yts = require('yt-search');
-const axios = require('axios');
-
-const RAPID_KEY = "5d4e56db58msh55bbcd4deee6ecep16c392jsn10acea30237c";
+const ytdl = require('ytdl-core');
+const fs = require('fs');
+const path = require('path');
 
 async function playCommand(sock, chatId, message) {
     try {
-        const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
+        const text = message.message?.conversation || 
+                     message.message?.extendedTextMessage?.text || '';
+
         const searchQuery = text.split(" ").slice(1).join(" ").trim();
 
         if (!searchQuery) {
             return await sock.sendMessage(chatId, { 
-                text: "Please enter a song name."
-            });
+                text: "⚠️ Usage: .play <song name>"
+            }, { quoted: message });
         }
 
-        // Search YouTube
         const { videos } = await yts(searchQuery);
+
         if (!videos.length) {
             return await sock.sendMessage(chatId, { 
-                text: "No song found."
-            });
+                text: "❌ No song found."
+            }, { quoted: message });
         }
 
         const video = videos[0];
         const urlYt = video.url;
+        const title = video.title.replace(/[<>:"/\\|?*]+/g, '');
 
         await sock.sendMessage(chatId, {
-            text: "Please wait, downloading..."
-        });
-
-        // Call RapidAPI
-        const response = await axios.get(
-            "https://youtube-to-mp315.p.rapidapi.com/title",
-            {
-                params: { url: urlYt },
-                headers: {
-                    "x-rapidapi-key": RAPID_KEY,
-                    "x-rapidapi-host": "youtube-to-mp315.p.rapidapi.com"
-                }
-            }
-        );
-
-        const data = response.data;
-
-        if (!data || !data.link) {
-            return await sock.sendMessage(chatId, { 
-                text: "Failed to get audio."
-            });
-        }
-
-        const audioUrl = data.link;
-
-        // Send audio
-        await sock.sendMessage(chatId, {
-            audio: { url: audioUrl },
-            mimetype: "audio/mpeg",
-            fileName: `${video.title}.mp3`
+            text: "🎵 Downloading audio..."
         }, { quoted: message });
 
-    } catch (err) {
-        console.log(err);
-        await sock.sendMessage(chatId, { 
-            text: "Download failed. Please try again."
+        const filePath = path.join(__dirname, '../temp', `${Date.now()}.mp3`);
+
+        const stream = ytdl(urlYt, {
+            filter: 'audioonly',
+            quality: 'highestaudio'
         });
+
+        const writeStream = fs.createWriteStream(filePath);
+        stream.pipe(writeStream);
+
+        await new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+
+        await sock.sendMessage(chatId, {
+            audio: fs.readFileSync(filePath),
+            mimetype: "audio/mpeg",
+            fileName: `${title}.mp3`
+        }, { quoted: message });
+
+        fs.unlinkSync(filePath);
+
+    } catch (err) {
+        console.log("[PLAY ERROR]", err);
+        await sock.sendMessage(chatId, { 
+            text: "❌ Download failed. Try again."
+        }, { quoted: message });
     }
 }
 
