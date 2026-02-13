@@ -1,151 +1,118 @@
 const fs = require('fs');
 const path = require('path');
-const settings = require('./settings.js'); // current folder
+const settings = require('../settings.js');
+const isOwnerOrSudo = require('../lib/isOwner');
 
-const antibotFile = path.join(__dirname, 'data', 'antibot.json');
-const warnFile = path.join(__dirname, 'data', 'antibot_warns.json');
+const antibotFile = path.join(__dirname, '..', 'data', 'antibot.json');
+const warnFile = path.join(__dirname, '..', 'data', 'antibot_warns.json');
 
-// ================================
-// Save/Load AntiBot Status
-// ================================
-function saveAntiBotStatus() {
-    try {
-        fs.writeFileSync(antibotFile, JSON.stringify({ antibot: !!settings.antibot }, null, 2));
-    } catch (err) {
-        console.error('[ANTIBOT] Failed to save status:', err);
-    }
-}
-
-function loadAntiBotStatus() {
-    try {
-        if (!fs.existsSync(antibotFile)) {
-            saveAntiBotStatus();
-            return;
-        }
-        const data = JSON.parse(fs.readFileSync(antibotFile, 'utf-8'));
-        settings.antibot = !!data.antibot;
-    } catch (err) {
-        console.error('[ANTIBOT] Failed to load status:', err);
-        settings.antibot = false;
-        saveAntiBotStatus();
-    }
-}
-
-loadAntiBotStatus();
-
-// ================================
-// Warn Tracking
-// ================================
 let warnData = {};
 
-function loadWarns() {
-    try {
-        if (fs.existsSync(warnFile)) {
-            warnData = JSON.parse(fs.readFileSync(warnFile, 'utf-8'));
-        }
-    } catch (err) {
-        console.error('[ANTIBOT] Failed to load warns:', err);
-        warnData = {};
-    }
+// ================================
+// Save/Load Functions
+// ================================
+function saveAntiBotStatus() {
+    fs.writeFileSync(antibotFile, JSON.stringify({ antibot: !!settings.antibot }, null, 2));
+}
+function loadAntiBotStatus() {
+    if (!fs.existsSync(antibotFile)) saveAntiBotStatus();
+    const data = JSON.parse(fs.readFileSync(antibotFile, 'utf-8'));
+    settings.antibot = !!data.antibot;
 }
 
 function saveWarns() {
-    try {
-        fs.writeFileSync(warnFile, JSON.stringify(warnData, null, 2));
-    } catch (err) {
-        console.error('[ANTIBOT] Failed to save warns:', err);
-    }
+    fs.writeFileSync(warnFile, JSON.stringify(warnData, null, 2));
+}
+function loadWarns() {
+    if (fs.existsSync(warnFile)) warnData = JSON.parse(fs.readFileSync(warnFile, 'utf-8'));
 }
 
+loadAntiBotStatus();
 loadWarns();
 
 // ================================
-// Command to toggle AntiBot
+// AntiBot Command (Owner Only)
 // ================================
 async function antiBotCommand(sock, message) {
     try {
         const chatId = message.key.remoteJid;
+        const sender = message.key.participant || message.key.remoteJid;
+
+        if (!(await isOwnerOrSudo(sender))) {
+            return await sock.sendMessage(chatId, { text: '🚫 OWNER ONLY COMMAND' }, { quoted: message });
+        }
+
         const body = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
         const args = body.trim().split(/\s+/).slice(1);
         const action = args[0]?.toLowerCase();
 
-        if (!action || !['on', 'off'].includes(action)) {
-            return await sock.sendMessage(chatId, {
-                text: '⚠️ Usage: .antibot <on/off>\nExample: .antibot on'
-            }, { quoted: message });
+        if (!action || !['on','off'].includes(action)) {
+            return await sock.sendMessage(chatId, { text: '⚠️ Usage: .antibot <on/off>' }, { quoted: message });
         }
 
         settings.antibot = action === 'on';
         saveAntiBotStatus();
 
-        await sock.sendMessage(chatId, {
-            text: `✅ AntiBot is now *${settings.antibot ? 'ENABLED' : 'DISABLED'}*`
-        }, { quoted: message });
-
+        await sock.sendMessage(chatId, { text: `✅ AntiBot is now *${settings.antibot ? 'ENABLED 🟢' : 'DISABLED 🔴'}*` }, { quoted: message });
     } catch (err) {
-        console.error('[ANTIBOT CMD] Error:', err);
-        try {
-            await sock.sendMessage(message.key.remoteJid, {
-                text: '❌ Failed to toggle AntiBot due to an error.'
-            }, { quoted: message });
-        } catch {}
+        console.error('[ANTIBOT CMD ERROR]', err);
     }
 }
 
 // ================================
-// Handle messages for AntiBot
+// AntiBot Handler (Auto Warn/Kick/Block)
 // ================================
 async function handleAntiBot(sock, message) {
     if (!settings.antibot) return;
+    const chatId = message.key.remoteJid;
+    if (!chatId.endsWith('@g.us')) return;
 
     try {
-        const chatId = message.key.remoteJid;
-        const sender = message.key.participant || message.key.remoteJid;
+        const sender = message.key.participant;
+        if (!sender) return;
 
-        // Detect status/spam messages
-        const isStatusMessage =
-            message.message?.statusBroadcast ||
-            (message.message?.protocolMessage?.type === 0); // adjust if needed
+        if (await isOwnerOrSudo(sender)) return;
 
-        if (isStatusMessage) {
-            // Initialize warn count
-            if (!warnData[chatId]) warnData[chatId] = {};
-            if (!warnData[chatId][sender]) warnData[chatId][sender] = 0;
+        // Detect bot messages
+        const isBotMessage = message.key.id.startsWith('BAE5') || message.key.id.length > 20;
+        if (!isBotMessage) return;
 
-            warnData[chatId][sender] += 1;
-            saveWarns();
+        if (!warnData[chatId]) warnData[chatId] = {};
+        if (!warnData[chatId][sender]) warnData[chatId][sender] = 0;
 
-            const warns = warnData[chatId][sender];
+        warnData[chatId][sender] += 1;
+        saveWarns();
 
-            // Send warn message
-            await sock.sendMessage(chatId, {
-                text: `⚠️ @${sender.split('@')[0]}, sending status/spam messages is not allowed!\nWarning ${warns}/3`,
-                mentions: [sender]
-            });
+        const warns = warnData[chatId][sender];
 
-            // Delete offending message
-            await sock.sendMessage(chatId, { delete: message.key });
+        await sock.sendMessage(chatId, {
+            text: `⚠️ @${sender.split('@')[0]} Bots are not allowed!\nWarning ${warns}/3`,
+            mentions: [sender]
+        });
 
-            // Auto kick after 3 warns
-            if (warns >= 3) {
-                try {
-                    await sock.groupRemove(chatId, [sender]);
-                    await sock.sendMessage(chatId, {
-                        text: `🚫 @${sender.split('@')[0]} has been removed from the group after 3 warnings.`,
-                        mentions: [sender]
-                    });
+        // Delete bot message
+        await sock.sendMessage(chatId, { delete: message.key });
 
-                    // Reset warns for this user
-                    delete warnData[chatId][sender];
-                    saveWarns();
-                } catch (err) {
-                    console.error('[ANTIBOT] Failed to kick user:', err);
-                }
+        // Kick & Block after 3 warns
+        if (warns >= 3) {
+            try {
+                await sock.groupRemove(chatId, [sender]);
+                await sock.sendMessage(chatId, { text: `🚫 @${sender.split('@')[0]} removed (Bot detected).`, mentions: [sender] });
+                
+                // Auto block
+                await sock.updateBlockStatus(sender, 'block');
+
+            } catch (kickErr) {
+                console.error('[ANTIBOT KICK/BLOCK ERROR]', kickErr);
             }
+
+            // Clean up
+            delete warnData[chatId][sender];
+            saveWarns();
         }
 
     } catch (err) {
-        console.error('[ANTIBOT HANDLER] Error:', err);
+        console.error('[ANTIBOT HANDLER ERROR]', err);
     }
 }
 

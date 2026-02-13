@@ -143,7 +143,7 @@ const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
 const getPPCommand = require('./commands/getpp');
-const antiBotCommand = require('./commands/antibot'); // adjust path
+const { antiBotCommand, handleAntiBot } = require('./commands/antibot');
 // Global settings
 global.packname = settings.packname;
 global.author = settings.author;
@@ -171,41 +171,48 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const message = messages[0];
         if (!message?.message) return;
 
-        // Handle autoread functionality
+        const chatId = message.key.remoteJid;
+        const senderId = message.key.participant || message.key.remoteJid;
+        const isGroup = chatId.endsWith('@g.us');
+
+        // Autoread
         await handleAutoread(sock, message);
 
-        // Store message for antidelete feature
-        if (message.message) {
-            storeMessage(sock, message);
-        }
+        // Store message for antidelete
+        storeMessage(sock, message);
 
-        // Handle message revocation
+        // Message revocation
         if (message.message?.protocolMessage?.type === 0) {
             await handleMessageRevocation(sock, message);
             return;
         }
 
-        const chatId = message.key.remoteJid;
-        const senderId = message.key.participant || message.key.remoteJid;
-        const isGroup = chatId.endsWith('@g.us');
+        // ✅ AntiBot handler (GROUP ONLY internally)
+        await handleAntiBot(sock, message);
+
         const senderIsSudo = await isSudo(senderId);
         const senderIsOwnerOrSudo = await isOwnerOrSudo(senderId, sock, chatId);
 
-        // Handle button responses
+        // ============================
+        // BUTTON HANDLER
+        // ============================
         if (message.message?.buttonsResponseMessage) {
             const buttonId = message.message.buttonsResponseMessage.selectedButtonId;
-            const chatId = message.key.remoteJid;
 
             if (buttonId === 'channel') {
                 await sock.sendMessage(chatId, {
                     text: '📢 *Join our Channel:*\nhttps://whatsapp.com/channel/0029Vb73SRl1CYoLWtyr4u1X'
                 }, { quoted: message });
                 return;
-            } else if (buttonId === 'owner') {
+            }
+
+            if (buttonId === 'owner') {
                 const ownerCommand = require('./commands/owner');
                 await ownerCommand(sock, chatId);
                 return;
-            } else if (buttonId === 'support') {
+            }
+
+            if (buttonId === 'support') {
                 await sock.sendMessage(chatId, {
                     text: `🔗 *Support*\n\nhttps://whatsapp.com/channel/0029Vb73SRl1CYoLWtyr4u1X`
                 }, { quoted: message });
@@ -435,13 +442,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await warnCommand(sock, chatId, senderId, mentionedJidListWarn, message);
                 break;
             case userMessage.startsWith('.antibot'):
-                const args = userMessage.split(' ').slice(1); // extract 'on' or 'off'
-                await antiBotCommand(sock, message, args);
-                commandExecuted = true;
+                await antiBotCommand(sock, message);
                 break;
-            case userMessage === '.getpp':   // ✅ .getpp command
+            case userMessage.startsWith('.getpp'):
                 await getPPCommand(sock, chatId, message);
-                commandExecuted = true;
                 break;
             case userMessage.startsWith('.tts'):
                 const text = userMessage.slice(4).trim();
