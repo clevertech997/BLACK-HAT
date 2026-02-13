@@ -1,4 +1,6 @@
+// getPP.js
 const isOwnerOrSudo = require('../lib/isOwner');
+const settings = require('../settings');
 
 async function getPPCommand(sock, chatId, message) {
     try {
@@ -6,12 +8,10 @@ async function getPPCommand(sock, chatId, message) {
 
         const sender = message.key.participant || message.key.remoteJid;
 
-        // OWNER ONLY
-        const allowed = await isOwnerOrSudo(sender);
+        // ✅ Owner or Sudo check using optimized function
+        const allowed = await isOwnerOrSudo(sender, sock, chatId);
         if (!allowed) {
-            return await sock.sendMessage(chatId, {
-                text: '🚫 OWNER ONLY COMMAND'
-            }, { quoted: message });
+            return await sock.sendMessage(chatId, { text: '🚫 OWNER ONLY COMMAND' }, { quoted: message });
         }
 
         let jid;
@@ -21,40 +21,29 @@ async function getPPCommand(sock, chatId, message) {
         if (replyUser) {
             jid = replyUser;
         } else {
-            const rawText =
-                message.message?.conversation ||
-                message.message?.extendedTextMessage?.text ||
-                '';
-
+            const rawText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
             const args = rawText.trim().split(/\s+/).slice(1);
-
             if (!args[0]) {
-                return await sock.sendMessage(
-                    chatId,
-                    { text: '⚠️ Usage:\n.getpp <number>\nOR reply to user with .getpp' },
-                    { quoted: message }
-                );
+                return await sock.sendMessage(chatId, {
+                    text: '⚠️ Usage:\n.getpp <number>\nOR reply to user with .getpp'
+                }, { quoted: message });
             }
 
             const cleanNumber = args[0].replace(/[^0-9]/g, '');
             jid = `${cleanNumber}@s.whatsapp.net`;
         }
 
-        // Check WA existence
+        // Check WhatsApp existence
         const exists = await sock.onWhatsApp(jid);
         if (!exists || !exists[0]?.exists) {
-            return await sock.sendMessage(chatId, {
-                text: '❌ Number not registered on WhatsApp.'
-            }, { quoted: message });
+            return await sock.sendMessage(chatId, { text: '❌ Number not registered on WhatsApp.' }, { quoted: message });
         }
 
-        // Profile pic
+        // Profile picture
         let ppUrl = null;
-        try {
-            ppUrl = await sock.profilePictureUrl(jid, 'image');
-        } catch {}
+        try { ppUrl = await sock.profilePictureUrl(jid, 'image'); } catch {}
 
-        // Fetch bio (about)
+        // Bio/status
         let bio = "No bio";
         try {
             const statusData = await sock.fetchStatus(jid);
@@ -63,10 +52,7 @@ async function getPPCommand(sock, chatId, message) {
 
         // Contact info
         let contact;
-        try {
-            contact = await sock.getContact(jid);
-        } catch {}
-
+        try { contact = await sock.getContact(jid); } catch {}
         const name = contact?.name || jid.split('@')[0];
         const isBusiness = contact?.isBusiness || false;
 
@@ -74,46 +60,26 @@ async function getPPCommand(sock, chatId, message) {
         let presence = 'Unknown';
         try {
             const p = await sock.fetchPresence(jid);
-            if (p?.presence === 'online') presence = '🟢 Online';
-            else presence = '⚪ Offline';
+            presence = p?.presence === 'online' ? '🟢 Online' : '⚪ Offline';
         } catch {}
 
         // Country detect
         const numberOnly = jid.split('@')[0];
-        const countryMap = {
-            "255": "🇹🇿 Tanzania",
-            "254": "🇰🇪 Kenya",
-            "256": "🇺🇬 Uganda",
-            "234": "🇳🇬 Nigeria",
-            "1": "🇺🇸/🇨🇦 USA/Canada",
-            "91": "🇮🇳 India",
-            "44": "🇬🇧 UK"
-        };
-
+        const countryMap = { "255": "🇹🇿 Tanzania", "254": "🇰🇪 Kenya", "256": "🇺🇬 Uganda", "234": "🇳🇬 Nigeria", "1": "🇺🇸/🇨🇦 USA/Canada", "91": "🇮🇳 India", "44": "🇬🇧 UK" };
         let country = "Unknown 🌍";
-        for (const code in countryMap) {
-            if (numberOnly.startsWith(code)) {
-                country = countryMap[code];
-                break;
-            }
-        }
+        for (const code in countryMap) if (numberOnly.startsWith(code)) { country = countryMap[code]; break; }
 
-        // Group info
+        // Group info (if applicable)
         let groupInfo = "";
         if (jid.endsWith('@g.us')) {
             try {
                 const meta = await sock.groupMetadata(jid);
-                groupInfo =
-`│👥 Members    : ${meta.participants.length}
-│📝 Subject    : ${meta.subject}`;
-            } catch {
-                groupInfo = "│👥 Group info unavailable";
-            }
+                groupInfo = `│👥 Members    : ${meta.participants.length}\n│📝 Subject    : ${meta.subject}`;
+            } catch { groupInfo = "│👥 Group info unavailable"; }
         }
 
-        // Hacker UI
-        const infoText =
-`╭━━━━━━━━━━━━━━━━━━━╮
+        // Hacker-style info text
+        const infoText = `╭━━━━━━━━━━━━━━━━━━━╮
 ┃ ☠️ BLACKHAT ULTRA SCAN ☠️
 ╰━━━━━━━━━━━━━━━━━━━╯
 │🧑 Name        : ${name}
@@ -127,21 +93,16 @@ ${groupInfo ? groupInfo + "\n" : ""}╰━━━━━━━━━━━━━�
 
         // Send result
         if (ppUrl) {
-            await sock.sendMessage(chatId, {
-                image: { url: ppUrl },
-                caption: infoText
-            }, { quoted: message });
+            await sock.sendMessage(chatId, { image: { url: ppUrl }, caption: infoText }, { quoted: message });
         } else {
-            await sock.sendMessage(chatId, {
-                text: infoText
-            }, { quoted: message });
+            await sock.sendMessage(chatId, { text: infoText }, { quoted: message });
         }
 
     } catch (err) {
         console.error('[GETPP ULTRA ERROR]', err);
-        await sock.sendMessage(chatId, {
-            text: '❌ Scan failed.'
-        }, { quoted: message });
+        if (message?.key?.remoteJid) {
+            await sock.sendMessage(chatId, { text: '❌ Scan failed.' }, { quoted: message });
+        }
     }
 }
 
