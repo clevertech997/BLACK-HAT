@@ -1,11 +1,11 @@
-const settings = require('../settings'); // Ensure this path is correct
+const settings = require('../settings');
 
 async function getPPCommand(sock, chatId, message) {
     try {
         const sender = message.key.participant || message.key.remoteJid;
 
-        // 🔒 Private command: only owner can use
-        if (sender !== settings.ownerNumber + '@s.whatsapp.net') {
+        // 🔒 Private mode check
+        if (settings.commandMode === "private" && sender !== settings.ownerNumber + '@s.whatsapp.net') {
             return await sock.sendMessage(chatId, {
                 text: '❌ You are not authorized to use this command.'
             }, { quoted: message });
