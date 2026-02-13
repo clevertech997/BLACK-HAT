@@ -4,18 +4,18 @@ const path = require('path');
 const dataFilePath = path.join(__dirname, '..', 'data', 'messageCount.json');
 
 /**
- * Load message counts from JSON file safely
+ * Load message counts from JSON file
  * @returns {Promise<Object>}
  */
 async function loadMessageCounts() {
     try {
         const data = await fs.readFile(dataFilePath, 'utf-8');
-        // Kama faili ni tupu au si JSON halali, rudisha object tupu
-        return data.trim() ? JSON.parse(data) : {};
+        return JSON.parse(data);
     } catch (err) {
-        if (err.code === 'ENOENT') return {}; // Faili halipo
+        // Ikiwa file haipo, return empty object
+        if (err.code === 'ENOENT') return {};
         console.error('Error loading message counts:', err);
-        return {}; // Rudisha object tupu kama kuna error nyingine
+        return {};
     }
 }
 
@@ -65,7 +65,7 @@ async function topMembers(sock, chatId, isGroup) {
 
     const sortedMembers = Object.entries(groupCounts)
         .sort(([, a], [, b]) => b - a)
-        .slice(0, 5); // Top 5 members
+        .slice(0, 5); // top 5 members
 
     if (sortedMembers.length === 0) {
         await sock.sendMessage(chatId, { text: 'No message activity recorded yet.' });

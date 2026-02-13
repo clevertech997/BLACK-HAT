@@ -142,9 +142,6 @@ const { anticallCommand, readState: readAnticallState } = require('./commands/an
 const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/pmblocker');
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
-const getPPCommand = require('./commands/getPPCommand');
-
-
 
 // Global settings
 global.packname = settings.packname;
@@ -172,12 +169,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         const message = messages[0];
         if (!message?.message) return;
-
-        // kisha ndani ya message handler:
-if (command === 'getpp') {
-    await getPPCommand(sock, chatId, message);
-}
-
 
         // Handle autoread functionality
         await handleAutoread(sock, message);
