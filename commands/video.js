@@ -1,6 +1,7 @@
-const { downloadVideo } = require('../lib/yt-dlp-helper');
 const fs = require('fs');
+const path = require('path');
 const yts = require('yt-search');
+const ytdl = require('ytdl-core');
 
 async function videoCommand(sock, chatId, message) {
     try {
@@ -43,18 +44,32 @@ async function videoCommand(sock, chatId, message) {
             caption: `🎬 *Downloading Video...*\n\n📌 Title: ${title}\n⏱ Duration: ${timestamp}`
         }, { quoted: message });
 
+        // Prepare temp path
+        const filePath = path.join(__dirname, '../temp', `${Date.now()}.mp4`);
+
         // Download video
-        const videoData = await downloadVideo(videoUrl);
+        const stream = ytdl(videoUrl, {
+            quality: '18' // mp4 medium quality (stable kwa WhatsApp)
+        });
+
+        const writeStream = fs.createWriteStream(filePath);
+        stream.pipe(writeStream);
+
+        // Subiri download imalize
+        await new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
 
         // Send video
         await sock.sendMessage(chatId, {
-            video: fs.readFileSync(videoData.path),
+            video: fs.readFileSync(filePath),
             mimetype: 'video/mp4',
             fileName: `${title}.mp4`
         }, { quoted: message });
 
         // Cleanup
-        fs.unlinkSync(videoData.path);
+        fs.unlinkSync(filePath);
 
     } catch (err) {
         console.error('[VIDEO CMD] Error:', err);
