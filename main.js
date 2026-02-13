@@ -142,15 +142,12 @@ const { anticallCommand, readState: readAnticallState } = require('./commands/an
 const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/pmblocker');
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
-const getPPCommand = require('./commands/getPP');
-
-
 
 // Global settings
 global.packname = settings.packname;
 global.author = settings.author;
 global.channelLink = "https://whatsapp.com/channel/0029Vb73SRl1CYoLWtyr4u1X";
-global.ytch = "𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆";
+global.ytch = "anonymous user";
 
 // Add this near the top of main.js with other global configurations
 const channelInfo = {
@@ -256,49 +253,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
             return;
         }
-
-        const { default: makeWASocket } = require('@adiwajshing/baileys');
-const handleMessages = require('./handleMessages');
-const handleAntiBot = require('./lib/antibot');
-
-async function startBot() {
-
-    const sock = makeWASocket({
-        printQRInTerminal: true,
-        auth: {/* auth info */}
-    });
-}
-
-        // ==============================
-// COMMAND HANDLER
-// ==============================
-
-if (userMessage.startsWith('.')) {
-
-    const args = rawText.slice(1).trim().split(/\s+/);
-    const command = args.shift().toLowerCase();
-
-    // Restrict private mode (only owner/sudo can use commands)
-    if (!isPublic && !isOwnerOrSudoCheck) {
-        return;
-    }
-
-    switch (command) {
-
-        // ======================
-        // GETPP COMMAND
-        // ======================
-        case 'getpp':
-            await getPPCommand(sock, chatId, message);
-            break;
-        case 'dp':
-            const dpCommand = require('./commands/dp');
-            await dpCommand(sock, chatId, message, args[0]);
-            break;
-
-    }
-}
-
 
         // First check if it's a game move
         if (/^[1-9]$/.test(userMessage) || userMessage.toLowerCase() === 'surrender') {

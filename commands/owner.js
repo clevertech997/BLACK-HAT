@@ -6,28 +6,39 @@ const settings = require('../settings');
  * @param {string} chatId - Chat ID to send the vCard
  */
 async function ownerCommand(sock, chatId) {
-    const { botOwner, ownerNumber } = settings;
+    try {
+        let { botOwner, ownerNumber } = settings;
 
-    // Hakikisha namba ni digits tu (WhatsApp inahitaji)
-    const cleanNumber = ownerNumber.replace(/\D/g, '');
+        // Support kwa multiple owners: kama ni array, tumia yote
+        if (!Array.isArray(ownerNumber)) ownerNumber = [ownerNumber];
+        if (!Array.isArray(botOwner)) botOwner = [botOwner];
 
-    // Tayarisha vCard compatible na WhatsApp
-    const vcard = `
+        const contactsArray = ownerNumber.map((num, idx) => {
+            const cleanNumber = String(num).replace(/\D/g, ''); // Remove any non-digit chars
+            const displayName = botOwner[idx] || 'Bot Owner';
+
+            const vcard = `
 BEGIN:VCARD
 VERSION:3.0
-FN:${botOwner}
+FN:${displayName}
 ORG:Bot Owner;
 TEL;type=CELL;waid=${cleanNumber}:${cleanNumber}
 END:VCARD
 `.trim();
 
-    // Tuma message ya contact
-    await sock.sendMessage(chatId, {
-        contacts: {
-            displayName: botOwner,
-            contacts: [{ vcard }],
-        },
-    });
+            return { vcard };
+        });
+
+        await sock.sendMessage(chatId, {
+            contacts: {
+                displayName: botOwner.join(', '),
+                contacts: contactsArray,
+            },
+        });
+    } catch (err) {
+        console.error('Error sending owner contact:', err);
+        await sock.sendMessage(chatId, { text: '❌ Tatizo ku-send contact ya owner.' });
+    }
 }
 
 module.exports = ownerCommand;
