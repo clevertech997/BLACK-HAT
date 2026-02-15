@@ -9,18 +9,18 @@ const axios = require('axios');
  */
 async function helpCommand(sock, chatId, message) {
     const helpMessage = `
-╭━❮ *𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻 BOT* ❯━┈⊷
+╭━❮ *𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻* ❯━┈⊷
 ║ 🤖 Bot: ${settings.botName || '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'}
-║ 👑 Owner: ${settings.botOwner || '𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆ʀ'}
-║ 🛠️ Version: ${settings.version || '3.0.0'}
-║ 💻 Platform: Heroku
-║ 🌐 Language: Node.js
-║ 🎥 YouTube Channel: ${global.ytch || 'Not Set'}
-║ 🔧 Features: Premium ✅
-║ 📡 Status: Online ✅
+║ 👑 _Owner_: ${settings.botOwner || '`*_𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆ʀ_*`'}
+║ 🛠️ _Version_: ${settings.version || '1.0.0.0'}
+║ 💻 _Platform_: *Heroku*
+║ 🌐 _Language_: *Node.js*
+║ 🎥 _YouTube Channel_: ${global.ytch || 'Not Set'}
+║ 🔧 _Features_: *Premium* ✅
+║ 📡 _Status_: *Online* 🟢
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ ⚡ General Commands ❯━┈⊷
+╭━❮ ⚡ _General Commands_ ❯━┈⊷
 ║ ✨ .help / .menu
 ║ ⚡ .ping
 ║ ❤️ .alive
@@ -39,11 +39,16 @@ async function helpCommand(sock, chatId, message) {
 ║ 📹 .vv
 ║ 🌐 .trt <text> <lang>
 ║ 📸 .ss <link>
+║ 📸 .ssweb
+║ 📸 .ssdark
+║ 📸 .ssmobdark
+║ 📸 .ssfull <url>
+║ 📸 .ssmobfull
 ║ 🆔 .jid
 ║ 🔗 .url
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 👮‍♂️ Admin Commands ❯━┈⊷
+╭━❮ 👮‍♂️ _Admin Commands_ ❯━┈⊷
 ║ ⛔ .ban @user
 ║ 🆙 .promote @user
 ║ 🔽 .demote @user
@@ -56,12 +61,17 @@ async function helpCommand(sock, chatId, message) {
 ║ 🚫 .antilink
 ║ 🚫 .antibadword
 ║ 🧹 .clear
+║ 📸 .getpp
+║ 📸 .dp 2557xxxxxxx
+║ 📸 .dp @mention
+║ 📸 .dp 2557xxxxxxx small
+║ 📸 .dp @mention medium
 ║ 📣 .tag <message>
 ║ 📢 .tagall
 ║ 🗣️ .tagnotadmin
 ║ 🙈 .hidetag <message>
 ║ 🤖 .chatbot
-║ 🤖 .antibot
+║ 🤖 .antibot <on/off>
 ║ 🔗 .resetlink
 ║ 🚷 .antitag <on/off>
 ║ 👋 .welcome <on/off>
@@ -69,11 +79,48 @@ async function helpCommand(sock, chatId, message) {
 ║ 📝 .setgdesc <description>
 ║ 🏷️ .setgname <new name>
 ║ 🖼️ .setgpp (reply to image)
+║
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🔒 Owner Commands ❯━┈⊷
+╭━❮ ⚙️ _Settings_ ❯━┈⊷
+║ 🔗 .setAntilink
+║ 👀 .getAntilink
+║ ❌ .removeAntilink
+║ 🚫 .setAntitag
+║ 📝 .getAntitag
+║ ❌ .removeAntitag
+║ 🗑️ .setAntiBadword
+║ 📋 .getAntiBadword
+║ ❌ .removeAntiBadword
+║ ⚠️ .incrementWarningCount
+║ 🔄 .resetWarningCount
+║ 🤖 .setChatbot
+║ 👀 .getChatbot
+║ 🗑️ .removeChatbot
+║ 👋 .addWelcome
+║ 🗑️ .delWelcome
+║ ✅ .isWelcomeOn
+║ 💌 .getWelcome
+║ ⚰️ .addGoodbye
+║ 🗑️ .delGoodBye
+║ ✅ .isGoodByeOn
+║ 💌 .getGoodbye
+║ ➕ .addSudo
+║ ➖ .removeSudo
+║ 📋 .getSudoList
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 🏆 _Leaderboard_ ❯━┈⊷
+║ 📊 .leaderboard daily
+║ 📊 .leaderboard weekly
+║ 📊 .leaderboard monthly
+║ 📊 .leaderboard total
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 🔒 _Owner Commands_ ❯━┈⊷
 ║ 🛠️ .mode <public/private>
 ║ 🧹 .clearsession
+║ 📊  .poll
 ║ 🕵️‍♂️ .antidelete
 ║ 🗣️ .getpp
 ║ 🗑️ .cleartmp
@@ -92,7 +139,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 📍 .mention <on/off>
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🎨 Image/Sticker Commands ❯━┈⊷
+╭━❮ 🎨 _Image/Sticker Commands_ ❯━┈⊷
 ║ 🌫️ .blur <image>
 ║ 🖼️ .simage <reply to sticker>
 ║ 🖌️ .sticker <reply to image>
@@ -107,7 +154,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 📸 .igsc <insta link>
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🖼️ Pies Commands ❯━┈⊷
+╭━❮ 🖼️ _Pies Commands_ ❯━┈⊷
 ║ 🌏 .pies <country>
 ║ 🇨🇳 .china
 ║ 🇮🇩 .indonesia
@@ -116,7 +163,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🧕 .hijab
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🎮 Game Commands ❯━┈⊷
+╭━❮ 🎮 _Game Commands_ ❯━┈⊷
 ║ ❌ .tictactoe @user
 ║ 🎯 .hangman
 ║ 🔤 .guess <letter>
@@ -126,7 +173,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🎲 .dare
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🤖 AI Commands ❯━┈⊷
+╭━❮ 🤖 _AI Commands_ ❯━┈⊷
 ║ 🧠 .gpt <question>
 ║ ♊ .gemini <question>
 ║ 🎨 .imagine <prompt>
@@ -134,7 +181,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🌀 .sora <prompt>
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🎯 Fun Commands ❯━┈⊷
+╭━❮ 🎯 _Fun Commands_ ❯━┈⊷
 ║ 💌 .compliment @user
 ║ 🤬 .insult @user
 ║ 💘 .flirt
@@ -148,7 +195,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🤡 .stupid @user [text]
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🔤 Textmaker ❯━┈⊷
+╭━❮ 🔤 _Textmaker_ ❯━┈⊷
 ║ ⚡ .metallic <text>
 ║ ❄️ .ice <text>
 ║ ⛄ .snow <text>
@@ -169,7 +216,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🔥 .fire <text>
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 📥 Downloader ❯━┈⊷
+╭━❮ 📥 _Downloader_ ❯━┈⊷
 ║ 🎵 .play <song_name>
 ║ 🎶 .song <song_name>
 ║ 🎧 .spotify <query>
@@ -180,7 +227,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🎬 .ytmp4 <Link>
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🧩 MISC ❯━┈⊷
+╭━❮ 🧩 _MISC_ ❯━┈⊷
 ║ 💖 .heart
 ║ 🔥 .horny
 ║ 🔵 .circle
@@ -199,7 +246,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ⚡ .triggered
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🖼️ ANIME ❯━┈⊷
+╭━❮ 🖼️ _ANIME_ ❯━┈⊷
 ║ 😺 .nom
 ║ 👆 .poke
 ║ 😢 .cry
@@ -210,7 +257,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 🤦‍♂️ .facepalm
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 💻 Github Commands ❯━┈⊷
+╭━❮ 💻 _Github Commands_ ❯━┈⊷
 ║ 🔗 .git
 ║ 🐙 .github
 ║ 📝 .sc
@@ -218,7 +265,7 @@ async function helpCommand(sock, chatId, message) {
 ║ 📦 .repo
 ╰━━━━━━━━━━━━⪼
 
-🌟 Join our channel for updates!:`;
+✨ *_Join our channel for updates_*!`;
 
     // List ya random images
     const imageUrls = [
