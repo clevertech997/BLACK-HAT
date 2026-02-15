@@ -1,25 +1,43 @@
-const { downloadAudio } = require('../lib/yt-dlp-helper');
-const fs = require('fs');
 const yts = require('yt-search');
-const axios = require('axios'); // For fallback API
+const ytdl = require('ytdl-core');
 
-async function fallbackDownload(query) {
-    try {
-        // Example fallback: fetch audio link from some API (pseudo-code)
-        const search = await yts(query);
-        if (!search || !search.videos.length) return null;
+const cooldown = new Map();
+const dailyUsage = new Map();
 
-        const video = search.videos[0];
-        // Use video.url to fetch audio via fallback service
-        // Here we simulate: just return video url to downloadAudio again
-        return { url: video.url, title: video.title, thumbnail: video.thumbnail, timestamp: video.timestamp };
-    } catch (err) {
-        console.error('Fallback failed', err);
-        return null;
-    }
+const COOLDOWN_TIME = 10000; // 10 sec
+const DAILY_LIMIT_FREE = 5;
+
+const OWNER_NUMBER = "2557XXXXXXXX"; // weka namba yako
+const premiumUsers = new Set([
+    "2557XXXXXXXX@s.whatsapp.net"
+]);
+
+function isOwner(senderId) {
+    return senderId.startsWith(OWNER_NUMBER);
 }
 
-async function songCommand(sock, chatId, message) {
+function isPremium(senderId) {
+    return premiumUsers.has(senderId);
+}
+
+function checkDailyLimit(senderId) {
+    const today = new Date().toDateString();
+
+    if (!dailyUsage.has(senderId)) {
+        dailyUsage.set(senderId, { date: today, count: 0 });
+    }
+
+    const data = dailyUsage.get(senderId);
+
+    if (data.date !== today) {
+        data.date = today;
+        data.count = 0;
+    }
+
+    return data;
+}
+
+async function songCommand(sock, chatId, message, senderId, isGroup) {
     try {
         const body =
             message.message?.conversation ||
@@ -29,74 +47,117 @@ async function songCommand(sock, chatId, message) {
         if (!body.toLowerCase().startsWith('.song')) return;
 
         const query = body.replace('.song', '').trim();
+
         if (!query) {
-            return await sock.sendMessage(
-                chatId,
-                { text: '⚠️ Please provide a song name.\nExample: *.song shape of you*' },
-                { quoted: message }
-            );
+            return sock.sendMessage(chatId, {
+                text: '⚠️ Usage: .song <song name>'
+            }, { quoted: message });
         }
 
-        let audioData;
-        let videoUrl, title, thumbnail, timestamp;
+        // 🚫 Group Only Mode (optional)
+        if (!isGroup) {
+            return sock.sendMessage(chatId, {
+                text: '❌ This command works in groups only.'
+            }, { quoted: message });
+        }
 
-        // First attempt: yt-dlp
-        try {
-            const search = await yts(query);
-            if (!search || !search.videos.length) throw new Error('No results');
+        // 🚫 Cooldown
+        if (cooldown.has(senderId)) {
+            const expire = cooldown.get(senderId);
+            if (Date.now() < expire) {
+                const left = Math.ceil((expire - Date.now()) / 1000);
+                return sock.sendMessage(chatId, {
+                    text: `⏳ Wait ${left}s before using again.`
+                }, { quoted: message });
+            }
+        }
 
-            const video = search.videos[0];
-            videoUrl = video.url;
-            title = video.title.replace(/[<>:"/\\|?*]+/g, '');
-            thumbnail = video.thumbnail;
-            timestamp = video.timestamp;
+        cooldown.set(senderId, Date.now() + COOLDOWN_TIME);
 
-            audioData = await downloadAudio(videoUrl);
+        // 🚫 Daily Limit (Free users only)
+        if (!isOwner(senderId) && !isPremium(senderId)) {
+            const usage = checkDailyLimit(senderId);
 
-        } catch (err) {
-            console.error('yt-dlp failed:', err);
-
-            // Fallback
-            const fallback = await fallbackDownload(query);
-            if (!fallback) {
-                return await sock.sendMessage(
-                    chatId,
-                    { text: '❌ Failed to download the song.' },
-                    { quoted: message }
-                );
+            if (usage.count >= DAILY_LIMIT_FREE) {
+                return sock.sendMessage(chatId, {
+                    text: '🚫 Daily limit reached (5 songs).\nUpgrade to Premium for unlimited access.'
+                }, { quoted: message });
             }
 
-            videoUrl = fallback.url;
-            title = fallback.title.replace(/[<>:"/\\|?*]+/g, '');
-            thumbnail = fallback.thumbnail;
-            timestamp = fallback.timestamp;
-
-            audioData = await downloadAudio(videoUrl);
+            usage.count++;
         }
 
-        // Send thumbnail + info
+        // 🔎 Search
+        const search = await yts(query);
+        if (!search.videos.length) {
+            return sock.sendMessage(chatId, {
+                text: '❌ No song found.'
+            }, { quoted: message });
+        }
+
+        const video = search.videos[0];
+
+        if (video.seconds > 900) {
+            return sock.sendMessage(chatId, {
+                text: '❌ Song too long. Max 15 minutes.'
+            }, { quoted: message });
+        }
+
+        const title = video.title.replace(/[<>:"/\\|?*]+/g, '');
+        const url = video.url;
+
+        // 🎚 Quality Logic
+        let quality = 'highestaudio';
+        let label = '128kbps';
+
+        if (isOwner(senderId) || isPremium(senderId)) {
+            label = '320kbps';
+        }
+
         await sock.sendMessage(chatId, {
-            image: { url: thumbnail },
-            caption: `🎵 *Downloading...*\n\n📌 Title: ${title}\n⏱ Duration: ${timestamp}`
+            image: { url: video.thumbnail },
+            caption:
+`🎵 *PREMIUM MUSIC SYSTEM*
+
+📌 Title: ${title}
+⏱ Duration: ${video.timestamp}
+🎧 Quality: ${label}
+
+⬇️ Processing...`
         }, { quoted: message });
 
-        // Send audio
+        const info = await ytdl.getInfo(url);
+
+        let format = ytdl.chooseFormat(info.formats, {
+            quality: quality,
+            filter: 'audioonly'
+        });
+
+        if (!format) {
+            format = ytdl.chooseFormat(info.formats, {
+                quality: 'highestaudio',
+                filter: 'audioonly'
+            });
+        }
+
+        if (!format) {
+            return sock.sendMessage(chatId, {
+                text: '❌ Failed to fetch audio.'
+            }, { quoted: message });
+        }
+
         await sock.sendMessage(chatId, {
-            audio: fs.readFileSync(audioData.path),
+            audio: { url: format.url },
             mimetype: 'audio/mpeg',
-            fileName: `${title}.mp3`
+            fileName: `${title}.mp3`,
+            caption: `✅ Download complete`
         }, { quoted: message });
-
-        // Cleanup
-        fs.unlinkSync(audioData.path);
 
     } catch (err) {
-        console.error('Final error:', err);
-        await sock.sendMessage(
-            chatId,
-            { text: '❌ Failed to download the song.' },
-            { quoted: message }
-        );
+        console.error('[PREMIUM SONG ERROR]', err);
+        await sock.sendMessage(chatId, {
+            text: '❌ Download failed.'
+        }, { quoted: message });
     }
 }
 
