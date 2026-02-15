@@ -142,7 +142,10 @@ const { anticallCommand, readState: readAnticallState } = require('./commands/an
 const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/pmblocker');
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
-
+const getppCommand = require('./commands/getpp');
+const { antiBotCommand, handleAntiBotMessages } = require('./commands/antibot');
+const dpCommand = require('./commands/dpCommand'); // adjust path kulingana na folder yako
+const { pollCommand, handlePollVote } = require('./commands/poll');
 // Global settings
 global.packname = settings.packname;
 global.author = settings.author;
@@ -169,6 +172,16 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         const message = messages[0];
         if (!message?.message) return;
+
+        // COMMAND HANDLER
+    if (text.startsWith(`${prefix}dp`)) {
+        const args = text.trim().split(/\s+/);
+        const numberOrMention = args[1]; // .dp 2557xxxxxx or mention
+        await dpCommand(sock, chatId, msg, numberOrMention);
+    }
+
+        //antibot handle
+        await handleAntiBotMessages(sock, message);
 
         // Handle autoread functionality
         await handleAutoread(sock, message);
@@ -398,6 +411,22 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             case userMessage === '.unmute':
                 await unmuteCommand(sock, chatId, senderId);
+                break;
+            case userMessage.startsWith('.getpp'):
+                await getppCommand(sock, chatId, message);
+                break;
+            case userMessage.startsWith('.antibot'):
+                await antiBotCommand(sock, message);
+                break;
+            case userMessage.startsWith('.poll'):
+                await pollCommand(sock, chatId, message);
+                break;
+            case userMessage.startsWith('.leaderboard'):
+                await leaderboardCommand(sock, chatId, message);
+                break;
+    // Case ya vote (user reply) inaweza kuangaliwa tofauti
+        case isVoteMessage(userMessage):
+                await handlePollVote(sock, chatId, message);
                 break;
             case userMessage.startsWith('.ban'):
                 if (!isGroup) {
