@@ -204,7 +204,7 @@ This project is licensed under the MIT License. However, you must:
 
 ## 📜 Copyright Notice
 
-Copyright (c) 2024 Professor. All rights reserved.
+Copyright (c) 2026 Professor. All rights reserved.
 
 This project contains code from various open source projects:
 - Baileys (MIT License)
