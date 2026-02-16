@@ -6,7 +6,7 @@ const http = require('http');
 const settings = require('../settings');
 const isOwnerOrSudo = require('../lib/isOwner');
 
-// Helper to run shell commands
+// Run shell commands
 function run(cmd) {
     return new Promise((resolve, reject) => {
         exec(cmd, { windowsHide: true }, (err, stdout, stderr) => {
@@ -16,180 +16,23 @@ function run(cmd) {
     });
 }
 
-// Safe sendMessage wrapper
+// Safe sendMessage
 async function safeSend(sock, chatId, message, content) {
     if (sock && chatId && message) {
         try { await sock.sendMessage(chatId, content, { quoted: message }); } catch {}
     }
 }
 
-// Check if current folder is a Git repo
-async function hasGitRepo() {
-    const gitDir = path.join(process.cwd(), '.git');
-    if (!fs.existsSync(gitDir)) return false;
-    try { 
-        await run('git --version'); 
-        return true; 
-    } catch {
-        console.warn('Git not found. Falling back to ZIP update.');
-        return false;
-    }
-}
-
-// Update via Git
-async function updateViaGit(sock, chatId, message) {
-    const oldRev = (await run('git rev-parse HEAD').catch(() => 'unknown')).trim();
-    await safeSend(sock, chatId, message, { text: '🔄 Fetching updates from Git…' });
-    await run('git fetch --all --prune');
-    const newRev = (await run('git rev-parse origin/main')).trim();
-    const alreadyUpToDate = oldRev === newRev;
-    const commits = alreadyUpToDate ? '' : await run(`git log --pretty=format:"%h %s (%an)" ${oldRev}..${newRev}`).catch(() => '');
-    await run(`git reset --hard ${newRev}`);
-    await run('git clean -fd');
-    await safeSend(sock, chatId, message, { text: alreadyUpToDate ? '✅ Already up to date.' : `✅ Updated to ${newRev}` });
-    await safeSend(sock, chatId, message, { text: '🔄 Installing dependencies…' });
-    await run('npm install --no-audit --no-fund');
-    return { oldRev, newRev, alreadyUpToDate, commits };
-}
-
-// Download file with redirects (fixed User-Agent)
-function downloadFile(url, dest, visited = new Set(), sock = null, chatId = null, message = null) {
-    return new Promise((resolve, reject) => {
-        if (visited.has(url) || visited.size > 5) return reject(new Error('Too many redirects'));
-        visited.add(url);
-
-        const client = url.startsWith('https://') ? https : http;
-
-        // ASCII-safe User-Agent
-        const safeUserAgent = 'BLACKHAT-Updater/1.0';
-
-        const req = client.get(url, { headers: { 'User-Agent': safeUserAgent, 'Accept': '*/*' } }, res => {
-            if ([301,302,303,307,308].includes(res.statusCode)) {
-                const location = res.headers.location;
-                if (!location) return reject(new Error(`HTTP ${res.statusCode} without Location`));
-                res.resume();
-                return downloadFile(new URL(location, url).toString(), dest, visited, sock, chatId, message)
-                    .then(resolve)
-                    .catch(reject);
-            }
-
-            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
-
-            safeSend(sock, chatId, message, { text: '🔄 Downloading ZIP file…' });
-
-            const file = fs.createWriteStream(dest);
-            res.pipe(file);
-            file.on('finish', () => file.close(resolve));
-            file.on('error', err => {
-                try { file.close(() => {}); } catch {}
-                fs.unlink(dest, () => reject(err));
-            });
-        });
-
-        req.on('error', err => fs.unlink(dest, () => reject(err)));
-    });
-}
-
-// Extract ZIP file
-async function extractZip(zipPath, outDir, sock = null, chatId = null, message = null) {
-    safeSend(sock, chatId, message, { text: '🔄 Extracting ZIP…' });
-
-    if (process.platform === 'win32') {
-        const zipPathWin = zipPath.replace(/'/g, "''");
-        const outDirWin = outDir.replace(/'/g, "''");
-        await run(`powershell -NoProfile -Command "Expand-Archive -Path '${zipPathWin}' -DestinationPath '${outDirWin}' -Force"`);
-        return;
-    }
-
-    const tools = [
-        { cmd: 'unzip', run: p => run(`unzip -o '${zipPath}' -d '${p}'`) },
-        { cmd: '7z', run: p => run(`7z x -y '${zipPath}' -o'${p}'`) },
-        { cmd: 'busybox', run: p => run(`busybox unzip -o '${zipPath}' -d '${p}'`) }
-    ];
-
-    for (const tool of tools) {
-        try { await run(`command -v ${tool.cmd}`); await tool.run(outDir); return; } catch {}
-    }
-
-    throw new Error("No system unzip tool found (unzip/7z/busybox). Git mode is recommended.");
-}
-
-// Recursively copy files
-function copyRecursive(src, dest, ignore = [], relative = '', outList = []) {
-    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-    for (const entry of fs.readdirSync(src)) {
-        if (ignore.includes(entry)) continue;
-        const s = path.join(src, entry);
-        const d = path.join(dest, entry);
-        const stat = fs.lstatSync(s);
-        if (stat.isDirectory()) copyRecursive(s, d, ignore, path.join(relative, entry), outList);
-        else { fs.copyFileSync(s, d); outList.push(path.join(relative, entry).replace(/\\/g, '/')); }
-    }
-}
-
-// Update via ZIP
-async function updateViaZip(sock, chatId, message, zipOverride) {
-    const zipUrl = (zipOverride || settings.updateZipUrl || process.env.UPDATE_ZIP_URL || '').trim();
-    if (!zipUrl) throw new Error('No ZIP URL configured.');
-
-    const tmpDir = path.join(process.cwd(), 'tmp');
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    const zipPath = path.join(tmpDir, 'update.zip');
-
-    await downloadFile(zipUrl, zipPath, new Set(), sock, chatId, message);
-
-    const extractTo = path.join(tmpDir, 'update_extract');
-    if (fs.existsSync(extractTo)) {
-        if (fs.rmSync) fs.rmSync(extractTo, { recursive: true, force: true });
-        else fs.rmdirSync(extractTo, { recursive: true });
-    }
-    await extractZip(zipPath, extractTo, sock, chatId, message);
-
-    safeSend(sock, chatId, message, { text: '🔄 Copying files…' });
-
-    const [root] = fs.readdirSync(extractTo).map(n => path.join(extractTo, n));
-    const srcRoot = fs.existsSync(root) && fs.lstatSync(root).isDirectory() ? root : extractTo;
-
-    const ignore = ['node_modules', '.git', 'session', 'tmp', 'temp', 'data', 'baileys_store.json'];
-    const copied = [];
-
-    // Preserve owner info
-    let preservedOwner = null, preservedBotOwner = null;
-    try {
-        const currentSettings = require('../settings');
-        preservedOwner = currentSettings?.ownerNumber ? String(currentSettings.ownerNumber) : null;
-        preservedBotOwner = currentSettings?.botOwner ? String(currentSettings.botOwner) : null;
-    } catch {}
-
-    copyRecursive(srcRoot, process.cwd(), ignore, '', copied);
-
-    if (preservedOwner) {
-        try {
-            const settingsPath = path.join(process.cwd(), 'settings.js');
-            if (fs.existsSync(settingsPath)) {
-                let text = fs.readFileSync(settingsPath, 'utf8');
-                text = text.replace(/ownerNumber\s*:\s*['"`][^'"`]*['"`]/, `ownerNumber: '${preservedOwner}'`);
-                if (preservedBotOwner) text = text.replace(/botOwner\s*:\s*['"`][^'"`]*['"`]/, `botOwner: '${preservedBotOwner}'`);
-                fs.writeFileSync(settingsPath, text);
-            }
-        } catch {}
-    }
-
-    // Cleanup
-    try { if (fs.rmSync) fs.rmSync(extractTo, { recursive: true, force: true }); else fs.rmdirSync(extractTo, { recursive: true }); } catch {}
-    try { if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath); } catch {}
-
-    return { copiedFiles: copied };
-}
-
-// Restart bot process
+// Restart bot safely (raw Node)
 async function restartProcess(sock, chatId, message) {
     await safeSend(sock, chatId, message, { text: '🔄 Restarting bot…' });
-    try { await run('pm2 restart all'); return; } catch {}
-    setTimeout(() => process.exit(0), 500);
+    // Give message time to send
+    setTimeout(() => {
+        process.exit(0); // rely on host to restart bot
+    }, 1000);
 }
 
-// Main update command
+// Update command
 async function updateCommand(sock, chatId, message, zipOverride) {
     const senderId = message.key.participant || message.key.remoteJid;
     const isOwner = await isOwnerOrSudo(senderId, sock, chatId);
@@ -202,13 +45,57 @@ async function updateCommand(sock, chatId, message, zipOverride) {
     try {
         await safeSend(sock, chatId, message, { text: '🔄 Starting update…' });
 
-        if (await hasGitRepo()) {
-            await updateViaGit(sock, chatId, message);
+        // Check if Git repo
+        const gitDir = path.join(process.cwd(), '.git');
+        if (fs.existsSync(gitDir)) {
+            await safeSend(sock, chatId, message, { text: '🔄 Updating via Git…' });
+            const oldRev = (await run('git rev-parse HEAD').catch(() => 'unknown')).trim();
+            await run('git fetch --all --prune');
+            const newRev = (await run('git rev-parse origin/main')).trim();
+            if (oldRev !== newRev) {
+                await run(`git reset --hard ${newRev}`);
+                await run('git clean -fd');
+                await safeSend(sock, chatId, message, { text: `✅ Updated to ${newRev}` });
+                await run('npm install --no-audit --no-fund');
+            } else {
+                await safeSend(sock, chatId, message, { text: '✅ Already up to date.' });
+            }
         } else {
-            await updateViaZip(sock, chatId, message, zipOverride);
+            // Update via ZIP
+            const zipUrl = (zipOverride || settings.updateZipUrl || process.env.UPDATE_ZIP_URL || '').trim();
+            if (!zipUrl) throw new Error('No ZIP URL configured.');
+
+            const tmpDir = path.join(process.cwd(), 'tmp');
+            if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+            const zipPath = path.join(tmpDir, 'update.zip');
+
+            await safeSend(sock, chatId, message, { text: '🔄 Downloading ZIP…' });
+            await new Promise((resolve, reject) => {
+                const client = zipUrl.startsWith('https://') ? https : http;
+                const req = client.get(zipUrl, { headers: { 'User-Agent': 'BLACKHAT-Updater/1.0' } }, res => {
+                    if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
+                    const file = fs.createWriteStream(zipPath);
+                    res.pipe(file);
+                    file.on('finish', () => file.close(resolve));
+                    file.on('error', err => { fs.unlink(zipPath, () => reject(err)); });
+                });
+                req.on('error', err => fs.unlink(zipPath, () => reject(err)));
+            });
+
+            // Extract ZIP
+            await safeSend(sock, chatId, message, { text: '🔄 Extracting ZIP…' });
+            if (process.platform === 'win32') {
+                const zipPathWin = zipPath.replace(/'/g, "''");
+                const outDirWin = process.cwd().replace(/'/g, "''");
+                await run(`powershell -NoProfile -Command "Expand-Archive -Path '${zipPathWin}' -DestinationPath '${outDirWin}' -Force"`);
+            } else {
+                await run(`unzip -o '${zipPath}' -d '${process.cwd()}'`);
+            }
+            await safeSend(sock, chatId, message, { text: '✅ ZIP update finished.' });
         }
 
-        await safeSend(sock, chatId, message, { text: '✅ Update finished, restarting bot…' });
+        // Restart bot safely
+        await safeSend(sock, chatId, message, { text: '🔄 Restarting bot…' });
         await restartProcess(sock, chatId, message);
 
     } catch (err) {
