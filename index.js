@@ -1,14 +1,3 @@
-/**
- * 𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧 - A WhatsApp Bot
- * Copyright (c) 2026 Professor
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the MIT License.
- * 
- * Credits:
- * - Baileys Library by @adiwajshing
- * - Pair Code implementation inspired by TechGod143 & DGXEON
- */
 require('./settings')
 const { Boom } = require('@hapi/boom')
 const fs = require('fs')
@@ -73,7 +62,7 @@ setInterval(() => {
 let phoneNumber = "255794469700"
 let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
 
-global.botname = "𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧"
+global.botname = "𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻 BOT"
 global.themeemoji = "•"
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code")
 const useMobile = process.argv.includes("--mobile")
@@ -161,7 +150,7 @@ async function startXeonBotInc() {
                             isForwarded: true,
                             forwardedNewsletterMessageInfo: {
                                 newsletterJid: '120363422524788798@newsletter',
-                                newsletterName: '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                                newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
                                 serverMessageId: -1
                             }
                         }
@@ -264,13 +253,13 @@ async function startXeonBotInc() {
             try {
                 const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
                 await XeonBotInc.sendMessage(botNumber, {
-                    text: `🤖 Bot Connected Successfully!\n\n⏰ Time: ${new Date().toLocaleString()}\n✅ Status: Online and Ready!\n\n✅Make sure to join channel`,
+                    text: `🤖 Bot Connected Successfully!\n\n⏰ Time: ${new Date().toLocaleString()}\n✅ Status: Online and Ready!\n\n✅Make sure to join below channel`,
                     contextInfo: {
                         forwardingScore: 1,
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
                             newsletterJid: '120363422524788798@newsletter',
-                            newsletterName: '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦',
+                            newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
                             serverMessageId: -1
                         }
                     }
@@ -280,14 +269,46 @@ async function startXeonBotInc() {
             }
 
             await delay(1999)
-            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || '𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦'} ]`)}\n\n`))
-            console.log(chalk.cyan(`╭━❮ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ❯━┈⊷`))
-            console.log(chalk.magenta(`\n${global.themeemoji || '║━▢'} YT CHANNEL: 𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻`))
-            console.log(chalk.magenta(`${global.themeemoji || '║━▢'} GITHUB: clevertech997`))
-            console.log(chalk.magenta(`${global.themeemoji || '║━▢'} WA NUMBER: ${owner}`))
-            console.log(chalk.magenta(`${global.themeemoji || '║━▢'} CREDIT: 𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦`))
-            console.log(chalk.green(`${global.themeemoji || '║━▢'} 🤖 Bot Connected Successfully! ✅`))
-            console.log(chalk.blue(`Bot Version: ${settings.version}`))
+console.clear()
+
+const botName = global.botname || "BLACK HAT BOT"
+const emoji = global.themeemoji || "⚡"
+const line = "╔════════════════════════════════════════════════════╗"
+const bottom = "╚════════════════════════════════════════════════════╝"
+
+console.log(chalk.green(`
+██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗ 
+██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
+███████║███████║██║     █████╔╝ █████╗  ██████╔╝
+██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
+██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+`))
+
+console.log(chalk.cyan(line))
+console.log(
+chalk.yellow.bold(
+`║                 [ ${botName} ]                 ║`
+))
+console.log(chalk.cyan("╠════════════════════════════════════════════════════╣"))
+
+console.log(chalk.magenta(`║ ${emoji} YT CHANNEL : 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆
+             ║`))
+console.log(chalk.magenta(`║ ${emoji} GITHUB     : 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆                ║`))
+console.log(chalk.magenta(`║ ${emoji} WA NUMBER  : ${owner}              ║`))
+console.log(chalk.magenta(`║ ${emoji} VERSION    : ${settings.version}                         ║`))
+
+console.log(chalk.cyan("╠════════════════════════════════════════════════════╣"))
+
+console.log(chalk.green(`║ ${emoji} SYSTEM STATUS : CONNECTED SUCCESSFULLY ✔     ║`))
+console.log(chalk.red(`║ ${emoji} SECURITY LEVEL : MAXIMUM 🔐                 ║`))
+console.log(chalk.blue(`║ ${emoji} BOT READY FOR DEPLOYMENT 🚀                ║`))
+
+console.log(chalk.cyan(bottom))
+console.log(chalk.gray("\n>>> INITIALIZING SECURE PROTOCOLS..."))
+console.log(chalk.green(">>> CONNECTION ESTABLISHED"))
+console.log(chalk.green(">>> ALL SYSTEMS OPERATIONAL\n"))
+
         }
         
         if (connection === 'close') {

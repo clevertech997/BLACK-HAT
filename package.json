@@ -1,5 +1,5 @@
 {
-  "name": "black hat bot",
+  "name": "blackhat-bot",
   "version": "0.0.0.1",
   "description": "Script Bot by anonymous-user",
   "main": "index.js",
@@ -13,7 +13,7 @@
     "install:panel": "npm install --legacy-peer-deps",
     "install:force": "npm install --force",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docker:build": "docker build -t docker run -e SESSION_ID=$SESSION_ID black hat bot"
+    "docker:build": "docker build -t docker run -e SESSION_ID=$SESSION_ID blackhat-bot"
   },
   "keywords": [
     "whatsapp-bot"
@@ -54,6 +54,7 @@
     "performance-now": "^2.1.0",
     "phin": "^3.7.1",
     "pino": "^8.21.0",
+    "puppeteer": "^24.15.0",
     "qrcode": "^1.5.4",
     "qrcode-reader": "^1.0.4",
     "qrcode-terminal": "^0.12.0",
