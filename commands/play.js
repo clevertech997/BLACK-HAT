@@ -5,76 +5,110 @@ const path = require('path');
 
 async function playCommand(sock, chatId, message) {
     try {
-        const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
-        const searchQuery = text.split(' ').slice(1).join(' ').trim();
 
-        if (!searchQuery) {
-            return await sock.sendMessage(chatId, { 
-                text: "❌ Please specify the song you want to download.\nUsage: *play <song name>*"
+        const text = message.message?.conversation ||
+                     message.message?.extendedTextMessage?.text;
+
+        if (!text) return;
+
+        const query = text.split(' ').slice(1).join(' ').trim();
+
+        if (!query) {
+            return await sock.sendMessage(chatId, {
+                text: "❌ Please provide a song name.\nExample: play imagine dragons"
             }, { quoted: message });
         }
 
-        // Search for the song
-        const { videos } = await yts(searchQuery);
-        if (!videos || videos.length === 0) {
-            return await sock.sendMessage(chatId, { 
-                text: `❌ No songs found for "${searchQuery}".`
+        // 🔍 Search YouTube
+        const search = await yts(query);
+
+        if (!search.videos.length) {
+            return await sock.sendMessage(chatId, {
+                text: `❌ No results found for: ${query}`
             }, { quoted: message });
         }
 
-        const video = videos[0];
+        const video = search.videos[0];
+
+        // Validate URL
+        if (!ytdl.validateURL(video.url)) {
+            return await sock.sendMessage(chatId, {
+                text: "❌ Invalid YouTube URL."
+            }, { quoted: message });
+        }
+
         const title = video.title.replace(/[<>:"/\\|?*]+/g, '');
-        const urlYt = video.url;
         const thumbnail = video.thumbnail;
         const duration = video.timestamp;
-        const uploader = video.author.name;
+        const views = video.views?.toLocaleString() || "Unknown";
+        const author = video.author?.name || "Unknown";
 
-        // Send video info with button
-        const messageButtons = [
-            { buttonId: `play ${title}`, buttonText: { displayText: '🎵 Download Audio' }, type: 1 },
-            { buttonId: 'join_channel', buttonText: { displayText: '📢 Join Channel' }, type: 1 }
-        ];
-
-        const buttonMessage = {
+        // 📸 Send thumbnail + info
+        await sock.sendMessage(chatId, {
             image: { url: thumbnail },
-            caption: `🎶 *${title}*\n⏱ Duration: ${duration}\n👤 Uploader: ${uploader}\n\nPress the button below to download audio.`,
-            footer: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻',
-            buttons: messageButtons,
-            headerType: 4
-        };
+            caption:
+`🎵 *${title}*
 
-        await sock.sendMessage(chatId, buttonMessage, { quoted: message });
+👤 Channel: ${author}
+⏱ Duration: ${duration}
+👁 Views: ${views}
 
-        // Prepare folder for downloads
-        const downloadsFolder = path.join(__dirname, '../downloads');
-        if (!fs.existsSync(downloadsFolder)) fs.mkdirSync(downloadsFolder);
+⬇️ Downloading audio...`
+        }, { quoted: message });
 
-        const filePath = path.join(downloadsFolder, `${title}.mp3`);
-        const stream = ytdl(urlYt, { filter: 'audioonly', quality: 'highestaudio' });
+        // 📁 Create download folder if not exists
+        const downloadDir = path.join(__dirname, '../downloads');
+        if (!fs.existsSync(downloadDir)) {
+            fs.mkdirSync(downloadDir);
+        }
+
+        const filePath = path.join(downloadDir, `${Date.now()}.mp3`);
+
+        // 🎧 Download audio stream
+        const audioStream = ytdl(video.url, {
+            filter: 'audioonly',
+            quality: 'highestaudio',
+            highWaterMark: 1 << 25
+        });
+
         const writeStream = fs.createWriteStream(filePath);
-        stream.pipe(writeStream);
+        audioStream.pipe(writeStream);
+
+        // 📊 Real download progress (console only)
+        audioStream.on('progress', (chunkLength, downloaded, total) => {
+            const percent = ((downloaded / total) * 100).toFixed(2);
+            console.log(`Downloading ${title}: ${percent}%`);
+        });
 
         writeStream.on('finish', async () => {
+            try {
+                await sock.sendMessage(chatId, {
+                    audio: { url: filePath },
+                    mimetype: 'audio/mpeg',
+                    fileName: `${title}.mp3`
+                }, { quoted: message });
+
+                fs.unlinkSync(filePath); // delete after sending
+
+            } catch (err) {
+                console.error("Send error:", err);
+                await sock.sendMessage(chatId, {
+                    text: "❌ Failed to send audio file."
+                }, { quoted: message });
+            }
+        });
+
+        audioStream.on('error', async (err) => {
+            console.error("Download error:", err);
             await sock.sendMessage(chatId, {
-                audio: fs.readFileSync(filePath),
-                mimetype: 'audio/mpeg',
-                fileName: `${title}.mp3`
-            }, { quoted: message });
-
-            fs.unlinkSync(filePath);
-        });
-
-        writeStream.on('error', async (err) => {
-            console.error('Error writing audio file:', err);
-            await sock.sendMessage(chatId, { 
-                text: "❌ Failed to download the song. Please try again later."
+                text: "❌ Download failed."
             }, { quoted: message });
         });
 
-    } catch (error) {
-        console.error('Error in playCommand:', error);
-        await sock.sendMessage(chatId, { 
-            text: "❌ An error occurred while processing your request."
+    } catch (err) {
+        console.error("System error:", err);
+        await sock.sendMessage(chatId, {
+            text: "❌ An unexpected system error occurred."
         }, { quoted: message });
     }
 }
