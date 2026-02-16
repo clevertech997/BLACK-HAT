@@ -163,7 +163,7 @@ async function updateCommand(sock, chatId, message) {
                 await run(`unzip -o '${zipPath}' -d '${process.cwd()}'`);
             }
 
-            await run('npm install --no-audit --no-fund');
+            await run('npm install --production --no-audit --no-fund');
 
             await safeSend(sock, chatId, message, {
                 text: "✅ ZIP Update Completed Successfully."
