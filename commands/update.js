@@ -52,20 +52,27 @@ async function updateViaGit(sock, chatId, message) {
     return { oldRev, newRev, alreadyUpToDate, commits };
 }
 
-// Download file with redirects
+// Download file with redirects (fixed User-Agent)
 function downloadFile(url, dest, visited = new Set(), sock = null, chatId = null, message = null) {
     return new Promise((resolve, reject) => {
         if (visited.has(url) || visited.size > 5) return reject(new Error('Too many redirects'));
         visited.add(url);
 
         const client = url.startsWith('https://') ? https : http;
-        const req = client.get(url, { headers: { 'User-Agent': '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻-Updater/1.0', 'Accept': '*/*' } }, res => {
+
+        // ASCII-safe User-Agent
+        const safeUserAgent = 'BLACKHAT-Updater/1.0';
+
+        const req = client.get(url, { headers: { 'User-Agent': safeUserAgent, 'Accept': '*/*' } }, res => {
             if ([301,302,303,307,308].includes(res.statusCode)) {
                 const location = res.headers.location;
                 if (!location) return reject(new Error(`HTTP ${res.statusCode} without Location`));
                 res.resume();
-                return downloadFile(new URL(location, url).toString(), dest, visited, sock, chatId, message).then(resolve).catch(reject);
+                return downloadFile(new URL(location, url).toString(), dest, visited, sock, chatId, message)
+                    .then(resolve)
+                    .catch(reject);
             }
+
             if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
 
             safeSend(sock, chatId, message, { text: '🔄 Downloading ZIP file…' });
@@ -78,6 +85,7 @@ function downloadFile(url, dest, visited = new Set(), sock = null, chatId = null
                 fs.unlink(dest, () => reject(err));
             });
         });
+
         req.on('error', err => fs.unlink(dest, () => reject(err)));
     });
 }
