@@ -62,7 +62,7 @@ setInterval(() => {
 let phoneNumber = "255794469700"
 let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
 
-global.botname = "𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻 BOT"
+global.botname = "𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻"
 global.themeemoji = "•"
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code")
 const useMobile = process.argv.includes("--mobile")
@@ -150,7 +150,7 @@ async function startXeonBotInc() {
                             isForwarded: true,
                             forwardedNewsletterMessageInfo: {
                                 newsletterJid: '120363422524788798@newsletter',
-                                newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
+                                newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻',
                                 serverMessageId: -1
                             }
                         }
@@ -259,7 +259,7 @@ async function startXeonBotInc() {
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
                             newsletterJid: '120363422524788798@newsletter',
-                            newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
+                            newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻',
                             serverMessageId: -1
                         }
                     }
@@ -294,15 +294,15 @@ console.log(chalk.cyan("╠═════════════════�
 
 console.log(chalk.magenta(`║ ${emoji} YT CHANNEL : 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆
              ║`))
-console.log(chalk.magenta(`║ ${emoji} GITHUB     : 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆                ║`))
-console.log(chalk.magenta(`║ ${emoji} WA NUMBER  : ${owner}              ║`))
-console.log(chalk.magenta(`║ ${emoji} VERSION    : ${settings.version}                         ║`))
+console.log(chalk.magenta(`║ ${emoji} GITHUB     : 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆           ║`))
+console.log(chalk.magenta(`║ ${emoji} WA NUMBER  : ${owner}                  ║`))
+console.log(chalk.magenta(`║ ${emoji} VERSION    : ${settings.version}       ║`))
 
 console.log(chalk.cyan("╠════════════════════════════════════════════════════╣"))
 
-console.log(chalk.green(`║ ${emoji} SYSTEM STATUS : CONNECTED SUCCESSFULLY ✔     ║`))
-console.log(chalk.red(`║ ${emoji} SECURITY LEVEL : MAXIMUM 🔐                 ║`))
-console.log(chalk.blue(`║ ${emoji} BOT READY FOR DEPLOYMENT 🚀                ║`))
+console.log(chalk.green(`║ ${emoji} SYSTEM STATUS : CONNECTED SUCCESSFULLY ✔ ║`))
+console.log(chalk.red(`║ ${emoji} SECURITY LEVEL : MAXIMUM 🔐                ║`))
+console.log(chalk.blue(`║ ${emoji} BOT READY FOR DEPLOYMENT 🚀               ║`))
 
 console.log(chalk.cyan(bottom))
 console.log(chalk.gray("\n>>> INITIALIZING SECURE PROTOCOLS..."))

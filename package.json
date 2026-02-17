@@ -68,10 +68,10 @@
     "ws": "^8.17.1",
     "yargs": "^17.6.0",
     "yargs-parser": "^21.1.1",
-    "youtube-yts": "^2.0.0",
-    "youtubedl-core": "^4.11.7",
-    "yt-search": "^2.12.1",
-    "ytdl-core": "^4.11.5"
+    "youtube-yts": "*",
+    "youtubedl-core": "*",
+    "yt-search": "*",
+    "ytdl-core": "*"
   },
   "overrides": {
     "jimp": "^1.6.0"
