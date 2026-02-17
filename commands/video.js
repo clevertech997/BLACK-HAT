@@ -3,128 +3,57 @@ const ytdl = require('ytdl-core');
 
 async function videoCommand(sock, chatId, message) {
     try {
-        const text =
-            message.message?.conversation ||
-            message.message?.extendedTextMessage?.text ||
-            '';
+        const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
+        const searchQuery = text.split(' ').slice(1).join(' ').trim();
 
-        const args = text.split(' ').slice(1).join(' ').trim();
-
-        if (!args) {
-            return sock.sendMessage(chatId, {
-                text: 'Usage: .video <YouTube link or search query>'
-            }, { quoted: message });
+        if (!searchQuery) {
+            return await sock.sendMessage(chatId, { text: '🎬 What video do you want?' }, { quoted: message });
         }
 
-        let videoUrl;
+        let videoUrl = searchQuery.startsWith('http') ? searchQuery : null;
         let videoTitle = '';
-        let thumbnail = '';
+        let videoThumbnail = '';
 
-        // 🔎 Search if not URL
-        if (!args.startsWith('http')) {
-            const search = await yts(args);
-            if (!search.videos.length) {
-                return sock.sendMessage(chatId, {
-                    text: '❌ No videos found.'
-                }, { quoted: message });
+        if (!videoUrl) {
+            const { videos } = await yts(searchQuery);
+            if (!videos || videos.length === 0) {
+                return await sock.sendMessage(chatId, { text: '❌ No videos found!' }, { quoted: message });
             }
-
-            const video = search.videos[0];
+            const video = videos[0];
             videoUrl = video.url;
             videoTitle = video.title;
-            thumbnail = video.thumbnail;
-        } else {
-            videoUrl = args;
-        }
-
-        if (!ytdl.validateURL(videoUrl)) {
-            return sock.sendMessage(chatId, {
-                text: '❌ Invalid YouTube link.'
-            }, { quoted: message });
+            videoThumbnail = video.thumbnail;
         }
 
         const info = await ytdl.getInfo(videoUrl);
+        const title = videoTitle || info.videoDetails.title;
+        const thumbnail = videoThumbnail || info.videoDetails.thumbnails.pop().url;
 
-        videoTitle = videoTitle || info.videoDetails.title;
-        thumbnail =
-            thumbnail ||
-            info.videoDetails.thumbnails.slice(-1)[0]?.url;
-
-        // 📸 Send Thumbnail First
-        const thumbMsg = await sock.sendMessage(chatId, {
+        // Send thumbnail first
+        await sock.sendMessage(chatId, {
             image: { url: thumbnail },
-            caption: `🎬 *${videoTitle}*\n\n⬇ Preparing download...`
+            caption: `*${title}*\n⏳ Downloading video...`
         }, { quoted: message });
 
-        // 🎥 Get progressive format (audio+video)
-        const format = ytdl.chooseFormat(info.formats, {
-            quality: '18', // 360p stable
-            filter: 'audioandvideo'
-        });
-
-        if (!format) throw new Error('No suitable format found.');
-
-        const totalSize = parseInt(format.contentLength || 0);
-
-        // ⚠️ Size limit check (50MB safety)
-        if (totalSize > 50 * 1024 * 1024) {
-            return sock.sendMessage(chatId, {
-                text: '❌ Video is too large for WhatsApp (max ~50MB).'
-            }, { quoted: message });
+        // Get suitable format (fallback to next available)
+        let format = ytdl.chooseFormat(info.formats, { quality: '18' });
+        if (!format || !format.url) {
+            format = info.formats.find(f => f.container === 'mp4' && f.hasVideo && f.hasAudio);
+            if (!format) throw new Error('No suitable video format found');
         }
 
-        const stream = ytdl(videoUrl, {
-            quality: '18',
-            requestOptions: {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0'
-                }
-            }
-        });
-
-        let downloaded = 0;
-        let lastPercent = 0;
-        const chunks = [];
-
-        stream.on('data', async (chunk) => {
-            downloaded += chunk.length;
-            chunks.push(chunk);
-
-            if (totalSize) {
-                const percent = Math.floor((downloaded / totalSize) * 100);
-
-                // Update every 10%
-                if (percent >= lastPercent + 10) {
-                    lastPercent = percent;
-                    await sock.sendMessage(chatId, {
-                        text: `⬇ Downloading... ${percent}%`
-                    }, { quoted: thumbMsg });
-                }
-            }
-        });
-
-        stream.on('end', async () => {
-            const buffer = Buffer.concat(chunks);
-
-            await sock.sendMessage(chatId, {
-                video: buffer,
-                mimetype: 'video/mp4',
-                fileName: `${videoTitle}.mp4`,
-                caption: `✅ *${videoTitle}*\n\n> Downloaded successfully`
-            }, { quoted: message });
-        });
-
-        stream.on('error', async (err) => {
-            console.error(err);
-            await sock.sendMessage(chatId, {
-                text: '❌ Download failed: ' + err.message
-            }, { quoted: message });
-        });
-
-    } catch (err) {
-        console.error('[VIDEO ERROR]', err);
+        // Send video directly
         await sock.sendMessage(chatId, {
-            text: '❌ Error: ' + err.message
+            video: { url: format.url },
+            mimetype: 'video/mp4',
+            fileName: `${title}.mp4`,
+            caption: `*${title}*\n✔ Downloaded successfully`
+        }, { quoted: message });
+
+    } catch (error) {
+        console.error('[VIDEO ERROR]', error);
+        await sock.sendMessage(chatId, {
+            text: '❌ Download failed. Video may be unavailable or format changed.'
         }, { quoted: message });
     }
 }

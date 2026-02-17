@@ -32,13 +32,13 @@ async function pingCommand(sock, chatId, message) {
 
         // Step 3: Build hacker-style bot info
         const botInfo = `
-╭━━━〔 🤖 𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻 〕━━━╮
-│ ⚡ Ping      : ${ping} ms
-│ ⏱️ Uptime    : ${uptimeFormatted}
-│ 🏷️ Version   : v${settings.version}
-│ 💻 Platform  : Node.js
-│ 🌐 Status    : Online 🟢
-╰━━━━━━━━━━━━━━━━━━━━━━━━━╯
+╭━❮🤖 𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻 ❯━┈⊷
+│ ⚡ Ping     : ${ping} ms
+│ ⏱️ Uptime   : ${uptimeFormatted}
+│ 🏷️ Version  : v${settings.version}
+│ 💻 Platform : Node.js
+│ 🌐 Status   : Online 🟢
+╰━━━━━━━━━━━━━━━━━━━━⪼
 `.trim();
 
         // Step 4: Send bot info with forwarding metadata

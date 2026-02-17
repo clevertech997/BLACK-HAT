@@ -1,12 +1,9 @@
 const yts = require('yt-search');
-const ytdl = require('ytdl-core');
-const fs = require('fs');
-const path = require('path');
-const { toAudio } = require('../lib/converter'); // Ensure this converts webm/m4a → mp3
-const os = require('os');
+const axios = require('axios');
 
 async function songCommand(sock, chatId, message) {
     try {
+        // 🔹 Extract message text
         const text =
             message.message?.conversation ||
             message.message?.extendedTextMessage?.text ||
@@ -19,11 +16,14 @@ async function songCommand(sock, chatId, message) {
         }
 
         let video;
+        let urlYt;
 
-        // If direct YouTube URL
+        // 🔹 If message is a direct YouTube URL
         if (text.includes('youtube.com') || text.includes('youtu.be')) {
-            video = { url: text };
+            urlYt = text.trim();
+            video = { url: urlYt, title: 'Audio' }; // placeholder title
         } else {
+            // 🔹 Search YouTube if not a link
             const search = await yts(text);
             if (!search.videos.length) {
                 return await sock.sendMessage(chatId, {
@@ -31,69 +31,60 @@ async function songCommand(sock, chatId, message) {
                 }, { quoted: message });
             }
             video = search.videos[0];
+            urlYt = video.url;
         }
 
-        // Fetch video info
-        const info = await ytdl.getInfo(video.url);
-        const title = info.videoDetails.title.replace(/[<>:"/\\|?*]+/g, '');
-        const thumbnail = info.videoDetails.thumbnails.pop()?.url;
-        const duration = parseInt(info.videoDetails.lengthSeconds || 0);
+        // 🔹 Send preview message with thumbnail + duration
+        if (video.thumbnail || video.duration.seconds) {
+            const duration = video.duration?.seconds || 0;
+            const min = Math.floor(duration / 60);
+            const sec = duration % 60;
 
-        // Send preview message
+            await sock.sendMessage(chatId, {
+                image: { url: video.thumbnail },
+                caption: `🎵 Downloading: *${video.title}*\n⏱ Duration: ${min}:${sec < 10 ? '0'+sec : sec}`
+            }, { quoted: message });
+        } else {
+            // fallback simple loading message
+            await sock.sendMessage(chatId, {
+                text: '_⏳ Downloading audio, please wait..._'
+            }, { quoted: message });
+        }
+
+        // 🔹 RapidAPI Request to download MP3
+        const options = {
+            method: 'GET',
+            url: 'https://youtube-mp3-audio-video-downloader.p.rapidapi.com/dl',
+            params: { url: urlYt },
+            headers: {
+                'x-rapidapi-key': '5d4e56db58msh55bbcd4deee6ecep16c392jsn10acea30237c',
+                'x-rapidapi-host': 'youtube-mp3-audio-video-downloader.p.rapidapi.com'
+            },
+            timeout: 30000
+        };
+
+        const response = await axios.request(options);
+        const data = response.data;
+
+        if (!data || !data.link) {
+            return await sock.sendMessage(chatId, {
+                text: '❌ Failed to fetch audio from RapidAPI.'
+            }, { quoted: message });
+        }
+
+        const audioUrl = data.link;
+        const title = (data.title || video.title || 'audio').replace(/[<>:"/\\|?*]+/g, '');
+
+        // 🔹 Send MP3 file
         await sock.sendMessage(chatId, {
-            image: { url: thumbnail },
-            caption: `🎵 Downloading: *${title}*\n⏱ Duration: ${Math.floor(duration / 60)}:${duration % 60}`
-        }, { quoted: message });
-
-        // Download audio stream
-        const stream = ytdl(video.url, {
-            filter: 'audioonly',
-            quality: 'highestaudio'
-        });
-
-        const chunks = [];
-        for await (const chunk of stream) {
-            chunks.push(chunk);
-        }
-
-        const audioBuffer = Buffer.concat(chunks);
-
-        if (!audioBuffer || audioBuffer.length === 0) {
-            throw new Error('Empty audio buffer');
-        }
-
-        // Detect format (webm / m4a / ogg / wav)
-        let inputExt = 'webm';
-        const sig = audioBuffer.slice(0, 4).toString('ascii');
-        if (sig === 'OggS') inputExt = 'ogg';
-        if (sig === 'RIFF') inputExt = 'wav';
-        if (audioBuffer.toString('ascii', 4, 8) === 'ftyp') inputExt = 'm4a';
-
-        // Convert to MP3
-        const mp3Buffer = await toAudio(audioBuffer, inputExt);
-        if (!mp3Buffer || mp3Buffer.length === 0) {
-            throw new Error('Conversion failed');
-        }
-
-        // Send final audio
-        await sock.sendMessage(chatId, {
-            audio: mp3Buffer,
+            audio: { url: audioUrl },
             mimetype: 'audio/mpeg',
             fileName: `${title}.mp3`,
             ptt: false
         }, { quoted: message });
 
-        // Cleanup temp converter files
-        const tempDir = path.join(__dirname, '../temp');
-        if (fs.existsSync(tempDir)) {
-            fs.readdirSync(tempDir).forEach(file => {
-                const filePath = path.join(tempDir, file);
-                try { fs.unlinkSync(filePath); } catch {}
-            });
-        }
-
     } catch (err) {
-        console.error('Song command error:', err);
+        console.error('Song command error:', err.response?.data || err.message);
         await sock.sendMessage(chatId, {
             text: `❌ Failed to download song.\n${err.message}`
         }, { quoted: message });
@@ -101,3 +92,8 @@ async function songCommand(sock, chatId, message) {
 }
 
 module.exports = songCommand;
+
+/*
+Powered by 𝑩𝑳𝑨𝑪𝑲✦𝑯𝑨𝑻✦𝗕𝗢𝗧
+Credits to 𝑨𝒏𝒐𝒏𝒚𝒎𝒐𝒖𝒔 𝑼𝒔𝒆
+*/
