@@ -1,6 +1,4 @@
 const settings = require('../settings');
-const fs = require('fs');
-const path = require('path');
 const axios = require('axios');
 
 async function helpCommand(sock, chatId, message) {
@@ -72,7 +70,7 @@ async function helpCommand(sock, chatId, message) {
 ╭━❮ 🔒 _Owner Commands_ ❯━┈⊷
 ║ 🛠️ .mode <public/private>
 ║ 🧹 .clearsession
-║ 📊  .poll
+║ 📊 .poll
 ║ 🕵️‍♂️ .antidelete
 ║ 🗣️ .getpp
 ║ 🗑️ .cleartmp
@@ -106,23 +104,96 @@ async function helpCommand(sock, chatId, message) {
 ║ 📸 .igsc <insta link>
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 🖼️ _ANIME_ ❯━┈⊷
-║ 😺 .nom
-║ 👆 .poke
-║ 😢 .cry
-║ 😘 .kiss
-║ 👋 .pat
-║ 🤗 .hug
-║ 😉 .wink
-║ 🤦‍♂️ .facepalm
+╭━❮ 🖼️ _Pies Commands_ ❯━┈⊷
+║ 🌍 .pies <country>
+║ 🇨🇳 .china
+║ 🇮🇩 .indonesia
+║ 🇯🇵 .japan
+║ 🇰🇷 .korea
+║ 🧕 .hijab
 ╰━━━━━━━━━━━━⪼
 
-╭━❮ 💻 _Github Commands_ ❯━┈⊷
-║ 🔗 .git
-║ 🐙 .github
-║ 📝 .sc
-║ 📜 .script
-║ 📦 .repo
+╭━❮ 🎮 _Game Commands_ ❯━┈⊷
+║ 🎲 .tictactoe @user
+║ 🕹️ .hangman
+║ ❓ .guess <letter>
+║ 🧩 .trivia
+║ 💡 .answer <answer>
+║ 🤔 .truth
+║ 🎯 .dare
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 🤖 _AI Commands_ ❯━┈⊷
+║ 💬 .gpt <question>
+║ 🪐 .gemini <question>
+║ 🖌️ .imagine <prompt>
+║ 🔮 .flux <prompt>
+║ 🧸 .sora <prompt>
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 🎯 _Fun Commands_ ❯━┈⊷
+║ 💖 .compliment @user
+║ 😡 .insult @user
+║ 😘 .flirt
+║ 💌 .shayari
+║ 🌙 .goodnight
+║ 🌹 .roseday
+║ 👤 .character @user
+║ 💀 .wasted @user
+║ 💞 .ship @user
+║ 🫡 .simp @user
+║ 🤪 .stupid @user [text]
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 🔤 _Textmaker_ ❯━┈⊷
+║ 🪙 .metallic <text>
+║ ❄️ .ice <text>
+║ 🌨️ .snow <text>
+║ 💎 .impressive <text>
+║ 🟩 .matrix <text>
+║ 💡 .light <text>
+║ 🟪 .neon <text>
+║ 😈 .devil <text>
+║ 💜 .purple <text>
+║ ⚡ .thunder <text>
+║ 🍃 .leaves <text>
+║ 🪖 .1917 <text>
+║ 🏟️ .arena <text>
+║ 🖤 .hacker <text>
+║ 🏖️ .sand <text>
+║ 🖤 .blackpink <text>
+║ 🟧 .glitch <text>
+║ 🔥 .fire <text>
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 📥 _Downloader_ ❯━┈⊷
+║ 🎵 .play <song_name>
+║ 🎶 .song <song_name>
+║ 🎧 .spotify <query>
+║ 📸 .instagram <link>
+║ 🎬 .facebook <link>
+║ 🎵 .tiktok <link>
+║ 🎥 .video <song_name>
+║ 🎞️ .ytmp4 <Link>
+╰━━━━━━━━━━━━⪼
+
+╭━❮ 🧩 _MISC_ ❯━┈⊷
+║ ❤️ .heart
+║ 🔥 .horny
+║ ⚪ .circle
+║ 🏳️‍🌈 .lgbt
+║ 🤡 .lolice
+║ 🤪 .its-so-stupid
+║ 📝 .namecard
+║ 🐢 .oogway
+║ 🐦 .tweet
+║ 🎬 .ytcomment
+║ 🤝 .comrade
+║ 🌈 .gay
+║ 🥂 .glass
+║ 🚔 .jail
+║ ✅ .passed
+║ 🤯 .triggered
 ╰━━━━━━━━━━━━⪼
 
 ✨ *_Join our channel for updates_*!`;
@@ -142,12 +213,8 @@ async function helpCommand(sock, chatId, message) {
     ];
 
     try {
-        // Chagua random image
         const randomIndex = Math.floor(Math.random() * imageUrls.length);
-        const imageUrl = imageUrls[randomIndex];
-
-        // Download image kama buffer
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        const response = await axios.get(imageUrls[randomIndex], { responseType: 'arraybuffer' });
         const imageBuffer = Buffer.from(response.data, 'binary');
 
         await sock.sendMessage(chatId, {
@@ -165,8 +232,6 @@ async function helpCommand(sock, chatId, message) {
         }, { quoted: message });
     } catch (error) {
         console.error('Error sending help message with image:', error);
-
-        // Fallback: tuma help message bila image
         await sock.sendMessage(chatId, { text: helpMessage });
     }
 }

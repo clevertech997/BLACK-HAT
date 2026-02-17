@@ -1,11 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
+const axios = require('axios');
 
 const USER_GROUP_DATA = path.join(__dirname, '../data/userGroupData.json');
-const USER_MEMORY = path.join(__dirname, '../data/userMemory.json');
 
-// Load or create JSON safely
+// -------------------- JSON Helpers --------------------
 function loadJSON(file, defaultValue = {}) {
     try {
         if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(defaultValue, null, 2));
@@ -20,28 +19,25 @@ function saveJSON(file, data) {
     try { fs.writeFileSync(file, JSON.stringify(data, null, 2)); } catch {}
 }
 
-// ----------------------- Memory & Rate Limit -----------------------
-const chatMemory = new Map(); // senderId -> { messages: [], lastUsed: timestamp }
-const RATE_LIMIT = 5000; // 5 seconds per user
+// -------------------- Memory & Rate Limit --------------------
+const chatMemory = new Map(); // chatId -> [{ role: 'user'/'assistant', content }]
+const RATE_LIMIT = 5000;
 
-function initUserMemory(senderId) {
-    if (!chatMemory.has(senderId)) {
-        chatMemory.set(senderId, { messages: [], lastUsed: 0 });
-    }
+function initChatMemory(chatId) {
+    if (!chatMemory.has(chatId)) chatMemory.set(chatId, []);
 }
 
-function addMessage(senderId, msg) {
-    initUserMemory(senderId);
-    const userData = chatMemory.get(senderId);
-    userData.messages.push(msg);
-    if (userData.messages.length > 10) userData.messages.shift(); // Keep last 10 messages
-    userData.lastUsed = Date.now();
-    chatMemory.set(senderId, userData);
+function addMessageToMemory(chatId, role, content) {
+    initChatMemory(chatId);
+    const messages = chatMemory.get(chatId);
+    messages.push({ role, content });
+    if (messages.length > 50) messages.shift(); // keep last 50 messages
+    chatMemory.set(chatId, messages);
 }
 
-// ----------------------- Typing Simulation -----------------------
+// -------------------- Typing Simulation --------------------
 async function showTyping(sock, chatId, text = '') {
-    const delay = 1000 + text.length * 50; // 50ms per character
+    const delay = 1000 + text.length * 50;
     try {
         await sock.presenceSubscribe(chatId);
         await sock.sendPresenceUpdate('composing', chatId);
@@ -49,7 +45,7 @@ async function showTyping(sock, chatId, text = '') {
     } catch {}
 }
 
-// ----------------------- Chatbot Command -----------------------
+// -------------------- Chatbot Command --------------------
 async function handleChatbotCommand(sock, chatId, message, match) {
     const data = loadJSON(USER_GROUP_DATA, { chatbot: {} });
     const senderId = message.key.participant || message.participant || message.key.remoteJid;
@@ -93,54 +89,58 @@ async function handleChatbotCommand(sock, chatId, message, match) {
     await sock.sendMessage(chatId, { text: '❌ Invalid command. Use .chatbot', quoted: message });
 }
 
-// ----------------------- Chatbot Response -----------------------
+// -------------------- Chatbot Response (Multi-turn) --------------------
+const OPENAI_API_KEY = 'sk-1234uvwxabcd5678uvwxabcd1234uvwxabcd5678';
+
 async function handleChatbotResponse(sock, chatId, message, userMessage, senderId) {
     const data = loadJSON(USER_GROUP_DATA, { chatbot: {} });
     if (!data.chatbot[chatId]) return;
 
-    initUserMemory(senderId);
+    initChatMemory(chatId);
+    const messages = chatMemory.get(chatId);
     const now = Date.now();
-    const userData = chatMemory.get(senderId);
-    if (now - userData.lastUsed < RATE_LIMIT) return; // rate limit
+    if (messages.length > 0 && now - (messages[messages.length-1].timestamp || 0) < RATE_LIMIT) return;
 
-    addMessage(senderId, userMessage);
+    addMessageToMemory(chatId, 'user', userMessage);
 
     await showTyping(sock, chatId, userMessage);
 
-    const response = await getAIResponse(userMessage, userData.messages);
-    if (!response) return;
+    const aiResponse = await getAIResponse(chatId);
+    if (!aiResponse) return;
 
-    await sock.sendMessage(chatId, { text: response, quoted: message });
+    addMessageToMemory(chatId, 'assistant', aiResponse);
+
+    await sock.sendMessage(chatId, { text: aiResponse, quoted: message });
 }
 
-// ----------------------- AI Request -----------------------
-async function getAIResponse(userMessage, contextMessages) {
+// -------------------- GPT Request --------------------
+async function getAIResponse(chatId) {
     try {
-        const prompt = `
-Chat naturally. Short, casual responses only.
-Previous messages:
-${contextMessages.join('\n')}
-User: ${userMessage}
-You:`;
+        const messages = chatMemory.get(chatId) || [];
+        // convert to OpenAI format
+        const openAIMessages = messages.map(m => ({ role: m.role, content: m.content }));
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-
-        const response = await fetch(
-            "https://zellapi.autos/ai/chatbot?text=" + encodeURIComponent(prompt),
-            { signal: controller.signal }
+        const res = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-3.5-turbo',
+                messages: openAIMessages,
+                temperature: 0.7,
+                max_tokens: 300
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 15000
+            }
         );
 
-        clearTimeout(timeout);
-        if (!response.ok) return null;
-
-        const data = await response.json();
-        if (!data.result) return null;
-
-        return data.result.trim();
-
+        const result = res.data?.choices?.[0]?.message?.content;
+        return result ? result.trim() : null;
     } catch (err) {
-        console.error("AI API error:", err.message);
+        console.error("GPT API error:", err.message);
         return null;
     }
 }

@@ -1,56 +1,55 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+const yts = require('yt-search');
+const ytdl = require('ytdl-core');
 
 async function lyricsCommand(sock, chatId, songTitle, message) {
     if (!songTitle) {
-        await sock.sendMessage(chatId, { 
-            text: '🔍 Please enter the song name to get the lyrics! Usage: *lyrics <song name>*'
+        return await sock.sendMessage(chatId, {
+            text: '🔍 Please enter the song name to get the lyrics!\nUsage: *lyrics <song name>*'
         }, { quoted: message });
-        return;
     }
 
     try {
-        // Genius search URL
-        const searchUrl = `https://genius.com/api/search/multi?per_page=5&q=${encodeURIComponent(songTitle)}`;
-        const searchRes = await axios.get(searchUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0'
-            }
-        });
-
-        // Get first song hit
-        const songHit = searchRes.data.response.sections.find(s => s.type === 'song')?.hits[0];
-        if (!songHit) {
-            await sock.sendMessage(chatId, { text: `❌ No lyrics found for "${songTitle}".` }, { quoted: message });
-            return;
+        // 🔎 Search YouTube for the song
+        const { videos } = await yts(songTitle);
+        if (!videos || videos.length === 0) {
+            return await sock.sendMessage(chatId, {
+                text: `❌ No video found for "${songTitle}".`
+            }, { quoted: message });
         }
 
-        const songUrl = songHit.result.url;
+        const video = videos[0];
+        const url = video.url;
+        const thumbnail = video.thumbnail;
+        const title = video.title;
 
-        // Fetch lyrics page
-        const pageRes = await axios.get(songUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const $ = cheerio.load(pageRes.data);
+        // 📄 Get video info
+        const info = await ytdl.getInfo(url);
 
-        // Genius lyrics are inside <div data-lyrics-container="true">
-        let lyrics = '';
-        $('div[data-lyrics-container="true"]').each((i, elem) => {
-            lyrics += $(elem).text().trim() + '\n';
-        });
+        // Use description as lyrics (some videos have full lyrics)
+        let lyrics = info.videoDetails.description || '';
+        lyrics = lyrics.trim();
 
         if (!lyrics) {
-            await sock.sendMessage(chatId, { text: `❌ Could not extract lyrics for "${songTitle}".` }, { quoted: message });
-            return;
+            return await sock.sendMessage(chatId, {
+                text: `❌ Could not find lyrics for "${title}".`
+            }, { quoted: message });
         }
 
-        // Limit message size to 4096 characters (WhatsApp limit)
+        // Limit WhatsApp message size
         const maxChars = 4096;
-        const output = lyrics.length > maxChars ? lyrics.slice(0, maxChars - 3) + '...' : lyrics;
+        if (lyrics.length > maxChars) {
+            lyrics = lyrics.slice(0, maxChars - 3) + '...';
+        }
 
-        await sock.sendMessage(chatId, { text: output }, { quoted: message });
+        // Send lyrics with thumbnail and title
+        await sock.sendMessage(chatId, {
+            image: { url: thumbnail },
+            caption: `🎵 *${title}*\n\n${lyrics}`
+        }, { quoted: message });
 
     } catch (error) {
-        console.error('Error fetching lyrics:', error);
-        await sock.sendMessage(chatId, { 
+        console.error('[LYRICS COMMAND ERROR]', error);
+        await sock.sendMessage(chatId, {
             text: `❌ An error occurred while fetching lyrics for "${songTitle}".`
         }, { quoted: message });
     }

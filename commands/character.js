@@ -1,90 +1,91 @@
 const { channelInfo } = require('../lib/messageConfig');
 
-async function characterCommand(sock, chatId, message, groupMetadata) {
-    try {
-        let userJid;
-        const ctx = message.message?.extendedTextMessage?.contextInfo;
+async function characterCommand(sock, chatId, message) {
+    let userToAnalyze;
 
-        // Determine user: mention > reply > sender
-        if (ctx?.mentionedJid?.length > 0) userJid = ctx.mentionedJid[0];
-        else if (ctx?.participant) userJid = ctx.participant;
-        else userJid = message.key.participant || message.key.remoteJid;
+    // 👀 Determine target user
+    if (message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length > 0) {
+        userToAnalyze = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
+    } else if (message.message?.extendedTextMessage?.contextInfo?.participant) {
+        userToAnalyze = message.message.extendedTextMessage.contextInfo.participant;
+    }
 
-        if (!userJid) return await sock.sendMessage(chatId, { text: '❌ Could not determine user.' });
-
-        const number = userJid.split('@')[0];
-
-        let displayName = number;
-        try { displayName = await sock.getName(userJid); } catch {}
-
-        let profilePic = null;
-        try { profilePic = await sock.profilePictureUrl(userJid, 'image'); } catch {}
-
-        let about = null;
-        try {
-            const status = await sock.fetchStatus(userJid);
-            if (status?.status) about = status.status;
-        } catch {}
-
-        let lastSeen = null;
-        try {
-            await sock.presenceSubscribe(userJid);
-            lastSeen = "🟢 Online / Recently Active";
-        } catch { lastSeen = "⚪ Last seen hidden"; }
-
-        // Role + extra group info
-        let role = null;
-        let roleEmoji = '';
-        let joinDate = null;
-        let isActive = false;
-
-        if (groupMetadata) {
-            const participant = groupMetadata.participants.find(p => p.id === userJid);
-            if (participant) {
-                isActive = true;
-                joinDate = participant?.joinedAt ? new Date(participant.joinedAt).toLocaleDateString() : null;
-                if (participant.admin === 'superadmin') { role = 'Owner'; roleEmoji = '👑'; }
-                else if (participant.admin === 'admin') { role = 'Admin'; roleEmoji = '🛡️'; }
-                else { role = 'Member'; roleEmoji = '👤'; }
-            }
-        }
-
-        // Fancy hacker-style borders
-        const topBorder = `━❮ ⚡ 𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻 SCAN ⚡ ❯━┈⊷`;
-        const bottomBorder = `╰━━━━━━━━━━━━⪼`;
-        const separator = `║ ──────────────────────────────`;
-
-        let msg = '';
-        msg += `${topBorder}\n`;
-        msg += `║ 👤 Name      : ${displayName}\n${separator}\n`;
-        msg += `║ 📞 Number    : +${number}\n${separator}\n`;
-        if (about) msg += `║ 💬 About     : ${about}\n${separator}\n`;
-        if (role) msg += `║ ${roleEmoji} Role      : ${role}\n${separator}\n`;
-        if (joinDate) msg += `║ 📅 Joined    : ${joinDate}\n${separator}\n`;
-        msg += `║ ⚡ Active    : ${isActive ? 'Yes' : 'No'}\n${separator}\n`;
-        if (lastSeen) msg += `║ 🟢 Last Seen : ${lastSeen}\n${separator}\n`;
-        msg += `${bottomBorder}\n`;
-
-        // Optional binary rain
-        const rainLines = 3;
-        for (let i = 0; i < rainLines; i++) {
-            let line = '';
-            for (let j = 0; j < 30; j++) {
-                line += Math.random() > 0.5 ? '0' : '1';
-            }
-            msg += `${line}\n`;
-        }
-
+    if (!userToAnalyze) {
         await sock.sendMessage(chatId, {
-            ...(profilePic ? { image: { url: profilePic } } : {}),
-            caption: msg,
-            mentions: [userJid],
+            text: '⚠ Please mention someone or reply to their message to analyze their character!',
+            ...channelInfo
+        });
+        return;
+    }
+
+    try {
+        // 📸 Profile picture
+        let profilePic;
+        try {
+            profilePic = await sock.profilePictureUrl(userToAnalyze, 'image');
+        } catch {
+            profilePic = 'https://i.imgur.com/2wzGhpF.jpeg'; // fallback
+        }
+
+        // 🎯 Traits pool (50+)
+        const traits = [
+            "Intelligent", "Creative", "Determined", "Ambitious", "Caring",
+            "Charismatic", "Confident", "Empathetic", "Energetic", "Friendly",
+            "Generous", "Honest", "Humorous", "Imaginative", "Independent",
+            "Intuitive", "Kind", "Logical", "Loyal", "Optimistic",
+            "Passionate", "Patient", "Persistent", "Reliable", "Resourceful",
+            "Sincere", "Thoughtful", "Understanding", "Versatile", "Wise",
+            "Adventurous", "Brave", "Calm", "Cheerful", "Compassionate",
+            "Considerate", "Courageous", "Curious", "Diligent", "Easygoing",
+            "Enthusiastic", "Flexible", "Forgiving", "Friendly", "Fun-loving",
+            "Generous", "Gentle", "Grateful", "Honorable", "Innovative"
+        ];
+
+        // 🎲 Randomly select 5-8 traits
+        const numTraits = Math.floor(Math.random() * 4) + 5; // 5-8 traits
+        const selectedTraits = [];
+        while (selectedTraits.length < numTraits) {
+            const t = traits[Math.floor(Math.random() * traits.length)];
+            if (!selectedTraits.includes(t)) selectedTraits.push(t);
+        }
+
+        // ⚡ Assign random percentages (50-100)
+        const traitPercentages = selectedTraits.map(trait => {
+            return `${trait}: ${Math.floor(Math.random() * 51) + 50}%`;
+        });
+
+        // 🔹 Fun stats
+        const mood = ["😄 Happy","😎 Confident","😌 Calm","🤔 Thoughtful","😂 Funny","🤩 Excited"];
+        const energy = Math.floor(Math.random() * 51) + 50; // 50-100%
+        const intelligence = Math.floor(Math.random() * 51) + 50;
+        const creativity = Math.floor(Math.random() * 51) + 50;
+        const luck = Math.floor(Math.random() * 51) + 50;
+        const overall = Math.floor((energy + intelligence + creativity + luck)/4);
+
+        // ✨ Build message
+        const analysis = `🔮 *Character Analysis* 🔮\n\n` +
+            `👤 *User:* ${userToAnalyze.split('@')[0]}\n\n` +
+            `✨ *Key Traits:*\n${traitPercentages.join('\n')}\n\n` +
+            `🎭 *Mood:* ${mood[Math.floor(Math.random()*mood.length)]}\n` +
+            `⚡ *Energy:* ${energy}% | 🧠 *Intelligence:* ${intelligence}%\n` +
+            `🎨 *Creativity:* ${creativity}% | 🍀 *Luck:* ${luck}%\n` +
+            `🎯 *Overall Rating:* ${overall}%\n\n` +
+            `Note: This is a fun analysis and should not be taken seriously!`;
+
+        // 📩 Send message
+        await sock.sendMessage(chatId, {
+            image: { url: profilePic },
+            caption: analysis,
+            mentions: [userToAnalyze],
             ...channelInfo
         });
 
-    } catch (err) {
-        console.error('Character Command Error:', err);
-        await sock.sendMessage(chatId, { text: '❌ Failed to fetch user info.' });
+    } catch (error) {
+        console.error('[CHARACTER COMMAND ERROR]', error);
+        await sock.sendMessage(chatId, {
+            text: '❌ Failed to analyze character! Try again later.',
+            ...channelInfo
+        });
     }
 }
 

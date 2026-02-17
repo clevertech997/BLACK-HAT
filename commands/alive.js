@@ -2,35 +2,36 @@ const settings = require("../settings");
 async function aliveCommand(sock, chatId, message) {
     try {
         const message1 = `
-╔═════════════════════════════╗
-║ 🤖⚡ BLACK HAT SYSTEM ⚡🤖║
-║ 🔐 Advanced Cyber Bot 🔐   ║
-╚═════════════════════════════╝
+╭━━━━━━━━━━━━━━━━━━━━━━━┈⊷
+║⚡_BLACK HAT SYSTEM_⚡
+║🔐 _Advanced Cyber Bot_ 🔐   
+╰━━━━━━━━━━━━━━━━━━━━━━━━⪼
 
-🟢 *Status:* ONLINE ✅
-🌍 *Mode:* PUBLIC 🌐
-🧬 *Version:* ${settings.version} 🚀
-🛡 *Security Level:* MAXIMUM 🔥
-⚙ *Engine:* Active & Stable 💎
+╭━━━━━━━━━━━━━━━━━━━━━━━┈⊷
+║🟢 *Status:* ONLINE ✅
+║🧬 *Version:* ${settings.version} 🚀
+║🛡 *Security Level:* MAXIMUM 🔥
+║⚙ *Engine:* Active & Stable 💎
+╰━━━━━━━━━━━━━━━━━━━━━━━━⪼
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌟🔥 *CORE FEATURES* 🔥🌟
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-▸ 👥 Group Management Tools
-▸ 🔗 Anti-Link Protection
-▸ 🧹 Anti-Spam Shield
-▸ 🎮 Fun & Games Commands
-▸ 📥 Media Downloader
-▸ 🤖 Auto Replies System
-▸ 🚀 Fast Performance Mode
-▸ 💡 Smart Utilities
-▸ 🎵 Music Tools
-▸ 🛠 Admin Controls
+╭━❮🌟🔥 *CORE FEATURES* 🔥🌟❯━┈⊷
+║▸ 👥 Group Management Tools
+║▸ 🔗 Anti-Link Protection
+║▸ 🧹 Anti-Spam Shield
+║▸ 🎮 Fun & Games Commands
+║▸ 📥 Media Downloader
+║▸ 🤖 Auto Replies System
+║▸ 🚀 Fast Performance Mode
+║▸ 💡 Smart Utilities
+║▸ 🎵 Music Tools
+║▸ 🛠 Admin Controls
+╰━━━━━━━━━━━━━━━━━━━━━━━━⪼
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-📌 Type *.menu* to explore full command list 📜
-⚡ Powered by BLACK HAT ⚡
-🔐 Stay Secure. Stay Anonymous.
+╭━━━━━━━━━━━━━━━━━━━━━━━┈⊷
+║📌 Type *.menu* full command list 📜
+║⚡ Powered by BLACK HAT ⚡
+║🔐 Stay Secure. Stay Anonymous.
+╰━━━━━━━━━━━━━━━━━━━━━━━━⪼
 `;
 
         await sock.sendMessage(chatId, {

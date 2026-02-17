@@ -58,7 +58,7 @@ async function autoreadCommand(sock, chatId, message) {
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
                             newsletterJid: '120363422524788798@newsletter',
-                            newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
+                            newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻',
                             serverMessageId: -1
                         }
                     }
@@ -81,7 +81,7 @@ async function autoreadCommand(sock, chatId, message) {
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363422524788798@newsletter',
-                    newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
+                    newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻',
                     serverMessageId: -1
                 }
             }
@@ -96,7 +96,7 @@ async function autoreadCommand(sock, chatId, message) {
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363422524788798@newsletter',
-                    newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻Bot MD',
+                    newsletterName: '𝑩𝑳𝑨𝑪𝑲 𝑯𝑨𝑻',
                     serverMessageId: -1
                 }
             }
