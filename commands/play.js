@@ -1,94 +1,63 @@
 const yts = require('yt-search');
-const ytdl = require('ytdl-core');
 const axios = require('axios');
 
 async function playCommand(sock, chatId, message) {
     try {
         const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
         const searchQuery = text.split(' ').slice(1).join(' ').trim();
-
+        
         if (!searchQuery) {
-            return await sock.sendMessage(chatId, {
-                text: "🎵 Andika jina la wimbo.\nMfano: .play snokono"
-            }, { quoted: message });
+            return await sock.sendMessage(chatId, { 
+                text: "What song do you want to download?"
+            });
         }
 
-        // STEP 1: Searching
-        const progressMsg = await sock.sendMessage(chatId, {
-            text: "🔎 Searching song..."
-        }, { quoted: message });
-
-        const search = await yts(searchQuery);
-
-        if (!search.videos.length) {
-            return await sock.sendMessage(chatId, {
-                text: "❌ Song not found!"
-            }, { quoted: message });
+        // Search for the song
+        const { videos } = await yts(searchQuery);
+        if (!videos || videos.length === 0) {
+            return await sock.sendMessage(chatId, { 
+                text: "No songs found!"
+            });
         }
 
-        const video = search.videos[0];
-
-        // STEP 2: Info Message
+        // Send loading message
         await sock.sendMessage(chatId, {
-            text:
-`🎧 *SONG FOUND*
-
-📌 Title: ${video.title}
-⏱ Duration: ${video.timestamp}
-👤 Channel: ${video.author.name}
-👀 Views: ${video.views.toLocaleString()}
-
-⬇️ Downloading audio...`
-        }, { quoted: progressMsg });
-
-        // STEP 3: Get thumbnail
-        let thumbBuffer;
-        try {
-            const thumb = await axios.get(video.thumbnail, { responseType: "arraybuffer" });
-            thumbBuffer = thumb.data;
-        } catch {
-            thumbBuffer = null;
-        }
-
-        // STEP 4: Download stream
-        const stream = ytdl(video.url, {
-            filter: 'audioonly',
-            quality: 'highestaudio'
+            text: "_Please wait your download is in progress_"
         });
 
-        // STEP 5: Uploading notice
-        await sock.sendMessage(chatId, {
-            text: "📤 Uploading song..."
-        }, { quoted: message });
+        // Get the first video result
+        const video = videos[0];
+        const urlYt = video.url;
 
-        // STEP 6: Send audio
+        // Fetch audio data from API
+        const response = await axios.get(`https://api.siputzx.my.id/api/d/ytmp3?url=${urlYt}`);
+        const data = response.data;
+
+        if (!data || !data.status || !data.result || !data.result.downloadUrl) {
+            return await sock.sendMessage(chatId, { 
+                text: "Failed to fetch audio from the API. Please try again later."
+            });
+        }
+
+        const audioUrl = data.result.downloadUrl;
+        const title = data.result.title;
+
+        // Send the audio
         await sock.sendMessage(chatId, {
-            audio: stream,
+            audio: { url: audioUrl },
             mimetype: "audio/mpeg",
-            fileName: `${video.title}.mp3`,
-            contextInfo: thumbBuffer ? {
-                externalAdReply: {
-                    title: video.title,
-                    body: video.author.name,
-                    thumbnail: thumbBuffer,
-                    mediaType: 1,
-                    renderLargerThumbnail: true,
-                    showAdAttribution: false
-                }
-            } : {}
-        }, { quoted: message });
-
-        // STEP 7: Done
-        await sock.sendMessage(chatId, {
-            text: `✅ Download complete\n🎵 *${video.title}*`
+            fileName: `${title}.mp3`
         }, { quoted: message });
 
     } catch (error) {
-        console.error("Play command error:", error);
-        await sock.sendMessage(chatId, {
-            text: "❌ Download failed. Try again later."
-        }, { quoted: message });
+        console.error('Error in song2 command:', error);
+        await sock.sendMessage(chatId, { 
+            text: "Download failed. Please try again later."
+        });
     }
 }
 
-module.exports = playCommand;
+module.exports = playCommand; 
+
+/*Powered by KNIGHT-BOT*
+*Credits to Keith MD*`*/

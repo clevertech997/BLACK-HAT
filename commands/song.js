@@ -28,7 +28,7 @@ async function tryRequest(getter, attempts = 3) {
 }
 
 async function getYupraDownloadByUrl(youtubeUrl) {
-	const apiUrl = `https://ironman.koyeb.app/ironman/dl/yta?url=${encodeURIComponent(youtubeUrl)}`;
+	const apiUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
 	const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
 	if (res?.data?.success && res?.data?.data?.download_url) {
 		return {
@@ -37,11 +37,11 @@ async function getYupraDownloadByUrl(youtubeUrl) {
 			thumbnail: res.data.data.thumbnail
 		};
 	}
-	throw new Error('ironman returned no download');
+	throw new Error('Yupra returned no download');
 }
 
 async function getOkatsuDownloadByUrl(youtubeUrl) {
-	const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+	const apiUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
 	const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
 	// Okatsu response shape: { status, creator, title, format, thumb, duration, cached, dl }
 	if (res?.data?.dl) {
